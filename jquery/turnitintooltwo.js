@@ -223,6 +223,7 @@ jQuery(document).ready(function($) {
 
     // Define column definitions as there can be different number of columns
     var submissionsDataTableColumnDefs = [];
+    var visibleCols = [];
     var noOfColumns = $('table.submissionsDataTable th').length / $('table.submissionsDataTable').length;
     var showOrigReport = ($('table.submissionsDataTable th.creport').length > 0) ? true : false;
     var useGrademark = ($('table.submissionsDataTable th.cgrade').length > 0) ? true : false;
@@ -230,16 +231,21 @@ jQuery(document).ready(function($) {
     for (var i=0; i < noOfColumns; i++) {
         if (i == 2 || i == 3) {
             submissionsDataTableColumnDefs.push({"aTargets": [ i ]});
-        } else if (i == 4 || i == 5) {
+            visibleCols.push(true);
+        } else if (i == 4) {
             submissionsDataTableColumnDefs.push({"sClass": "right", "aTargets": [ i ]});
-        } else if ((i == 7 && showOrigReport) || ((i == 7 && !showOrigReport) || (i == 9 && useGrademark))) {
+            visibleCols.push(true);
+        } else if (i == 6 || (i == 8 && showOrigReport) || ((i == 8 && !showOrigReport) || (i == 10 && useGrademark))) {
             submissionsDataTableColumnDefs.push({"sClass": "right", "aTargets": [ i ], "iDataSort": i-1, "sType":"numeric"});
-        } else if (i == 1 || ((i >= 6 && !showOrigReport && !useGrademark)
-                                || (i >= 8 && ((!showOrigReport && useGrademark) || (showOrigReport && !useGrademark))) 
-                                || (i >= 10 && showOrigReport && useGrademark))) {
+            visibleCols.push(true);
+        } else if (i == 1 || ((i >= 7 && !showOrigReport && !useGrademark)
+                                || (i >= 9 && ((!showOrigReport && useGrademark) || (showOrigReport && !useGrademark))) 
+                                || (i >= 11 && showOrigReport && useGrademark))) {
             submissionsDataTableColumnDefs.push({"sClass": "center", "bSortable": false, "aTargets": [ i ]});
-        } else if ((i == 0) || (i == 6 && showOrigReport) || ((i == 6 && !showOrigReport) || (i == 8 && useGrademark))) {
-            submissionsDataTableColumnDefs.push({"bVisible": false, "aTargets": [ i ]});
+            visibleCols.push(true);
+        } else if ((i == 0) || (i == 5) || (i == 7 && showOrigReport) || ((i == 7 && !showOrigReport) || (i == 9 && useGrademark))) {
+            submissionsDataTableColumnDefs.push({"bVisible": true, "aTargets": [ i ]});
+            visibleCols.push(false);
         }
     }
 
@@ -253,7 +259,7 @@ jQuery(document).ready(function($) {
         partTables[part_id] = $('table#'+part_id).dataTable({
             "bProcessing": true,
             "aoColumnDefs": submissionsDataTableColumnDefs,
-            "aaSorting": [[ 3, "desc" ],[1, "asc"]],
+            "aaSorting": [[ 2, "asc" ],[ 4, "asc" ]],
             "sAjaxSource": "ajax.php",
             "oLanguage": dataTablesLang,
             "sDom": "r<\"top navbar\"lf><\"dt_pagination\"pi>t<\"bottom\"><\"dt_pagination\"pi>",
@@ -275,13 +281,16 @@ jQuery(document).ready(function($) {
             "bStateSave": true,
             "fnStateSave": function (oSettings, oData) {
                 try {
-                    localStorage.setItem( uid+'DataTables', JSON.stringify(oData) );
+                    localStorage.setItem( part_id+'DataTables', JSON.stringify(oData) );
                 } catch ( e ) {
                 }
             },
+            "fnStateSaveParams": function (oSettings, oData) {
+                oData.abVisCols = visibleCols;
+            },
             "fnStateLoad": function (oSettings) {
                 try {
-                    return JSON.parse( localStorage.getItem(uid+'DataTables') );
+                    return JSON.parse( localStorage.getItem(part_id+'DataTables') );
                 } catch ( e ) {
                 }
             },
@@ -294,6 +303,8 @@ jQuery(document).ready(function($) {
                 initialiseUnanoymiseForm("all", 0, 0);
             }
         });
+
+        partTables[part_id].fnSetColumnVis(visibleCols.toString())
     });
 
     $('table.submissionsDataTable').each(function() {
@@ -453,15 +464,16 @@ jQuery(document).ready(function($) {
         if (proceed) {
             var idStr = $(this).attr("id").split("_");
             var url = $('#'+idStr[0]+'_url_'+idStr[1]).html()+'&viewcontext=box&do='+idStr[0]+'&submissionid='+idStr[1]+'&sesskey='+M.cfg.sesskey;
-            var dvWindow = window.open(url, 'dv_'+idStr[1]);
+            var dvWindow = window.open('about:blank', 'dv_'+idStr[1]);
             var width = $(window).width();
             var height = $(window).height();
+            dvWindow.document.write('<title>Document Viewer</title>');
+            dvWindow.document.write('<style>html, body { margin: 0; padding: 0; border: 0; }</style>');
             if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
                 dvWindow.document.write('<iframe id="dvWindow" name="dvWindow" width="'+width+'" height="'+height+'" sandbox="allow-popups allow-same-origin allow-top-navigation allow-forms allow-scripts"></iframe>');
             } else {
                 dvWindow.document.write('<frameset><frame id="dvWindow" name="dvWindow"></frame></frameset>');
             }
-            dvWindow.document.write('<script>document.body.style = \'margin: 0 0;\';</script'+'>');
             dvWindow.document.getElementById('dvWindow').src = url;
             dvWindow.document.close();
             if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -553,11 +565,9 @@ jQuery(document).ready(function($) {
         });
 
         // Enable other editable fields when an editable form is closed
-        $('.editable_date, .editable_text').on('hidden', function(e, reason) {
-            if (reason == 'nochange' || reason == 'manual') {
-                var current = ($(this).prop('id'));
-                $('.editable_date, .editable_text').not('#'+current).editable('enable');
-            }
+        $('.editable_date, .editable_text').on('hidden', function() {
+            var current = ($(this).prop('id'));
+            $('.editable_date, .editable_text').not('#'+current).editable('enable');
         });
     }
 
