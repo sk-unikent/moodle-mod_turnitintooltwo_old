@@ -54,7 +54,25 @@ switch ($action) {
                 case "dtdue":
                 case "dtpost":
                     $fieldvalue = required_param('value', PARAM_RAW);
-                    $fieldvalue = strtotime($fieldvalue);
+                    // We need to work out the users timezone or GMT offset.
+                    $usertimezone = get_user_timezone();
+                    if (is_numeric($usertimezone)) {
+                        if ($usertimezone > 0) {
+                            $usertimezone = "GMT+$usertimezone";
+                        } else if ($usertimezone < 0) {
+                            $usertimezone = "GMT$usertimezone";
+                        } else {
+                            $usertimezone = 'GMT';
+                        }
+                    }
+                    $fieldvalue = strtotime($fieldvalue.' '.$usertimezone);
+
+                    if ($fieldname == "dtpost" && $turnitintooltwoassignment->turnitintooltwo->anon && $fieldvalue < time()) {
+                        $anon_assignment = new stdClass();
+                        $anon_assignment->id = required_param('assignment', PARAM_INT);
+                        $anon_assignment->anon = 0;
+                        $DB->update_record('turnitintooltwo', $anon_assignment);
+                    }
                     break;
             }
 
@@ -89,7 +107,7 @@ switch ($action) {
         $turnitin_user = $DB->get_record('turnitintooltwo_users', array('userid' => $eula_user_id));
 
         // Build user object for update
-        $eula_user = new object();
+        $eula_user = new stdClass();
         $eula_user->id += $turnitin_user->id;
         $eula_user->userid = $eula_user_id;
         $eula_user->user_agreement_accepted = 1;
@@ -471,7 +489,7 @@ switch ($action) {
                 $i++;
             }
 
-            $result = new object();
+            $result = new stdClass();
             $result->completed = $i;
             $result->total = count($classids);
             $msg = get_string('recreatemulticlassescomplete', 'turnitintooltwo', $result);
@@ -516,7 +534,7 @@ switch ($action) {
             $tiicourseid = optional_param('tii_course_id', 0, PARAM_INT);
             $coursetolink = optional_param('course_to_link', 0, PARAM_INT);
 
-            $turnitincourse = new object();
+            $turnitincourse = new stdClass();
             $turnitincourse->courseid = $coursetolink;
             $turnitincourse->ownerid = $USER->id;
             $turnitincourse->turnitin_cid = $tiicourseid;

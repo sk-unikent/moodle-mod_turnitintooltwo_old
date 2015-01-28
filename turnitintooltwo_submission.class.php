@@ -77,7 +77,7 @@ class turnitintooltwo_submission {
         $this->submission_objectid = null;
         $this->submissionunanon = 0;
 
-        $submission = new object();
+        $submission = new stdClass();
         $submission->userid = $data['studentsname'];
         $submission->turnitintooltwoid = $this->turnitintooltwoid;
         $submission->submission_part = $data['submissionpart'];
@@ -369,7 +369,7 @@ class turnitintooltwo_submission {
             $response = $turnitincall->createNothingSubmission($newsubmission);
             $newsubmission = $response->getSubmission();
 
-            $submission = new object();
+            $submission = new stdClass();
             $submission->userid = $userid;
             $submission->turnitintooltwoid = $turnitintooltwoassignment->turnitintooltwo->id;
             $submission->submission_part = $partid;
@@ -415,8 +415,28 @@ class turnitintooltwo_submission {
         $fs = get_file_storage();
         $files = $fs->get_area_files($context->id, 'mod_turnitintooltwo', 'submissions', $this->id, "timecreated", false);
         $tempfile = "";
+
         foreach ($files as $file) {
-            $tempfile = turnitintooltwo_tempfile("_".$file->get_filename());
+
+            $filename = array(
+                $this->submission_title,
+                $cm->id
+            );
+
+            if ( ! $turnitintooltwoassignment->turnitintooltwo->anon) {
+                $user_details = array(
+                    $this->userid,
+                    $user->firstname,
+                    $user->lastname
+                );
+
+                $filename = array_merge($user_details, $filename);
+            }
+
+            $suffix = $file->get_filename();
+
+            $tempfile = turnitintooltwo_tempfile($filename, $suffix);
+
             $fh = fopen($tempfile, "w");
             fwrite($fh, $file->get_content());
             fclose($fh);
@@ -458,7 +478,7 @@ class turnitintooltwo_submission {
                 $newsubmission = $response->getSubmission();
 
                 // Save the submission.
-                $submission = new object();
+                $submission = new stdClass();
                 $submission->id = $this->id;
                 $submission->userid = $this->userid;
                 $submission->turnitintooltwoid = $this->turnitintooltwoid;
@@ -549,7 +569,7 @@ class turnitintooltwo_submission {
             $turnitintooltwoassignment = new turnitintooltwo_assignment($this->turnitintooltwoid);
         }
 
-        $sub = new object();
+        $sub = new stdClass();
         $sub->submission_title = $tiisubmissiondata->getTitle();
         $sub->submission_part = $this->submission_part;
         $sub->submission_objectid = $tiisubmissiondata->getSubmissionId();

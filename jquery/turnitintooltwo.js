@@ -222,7 +222,7 @@ jQuery(document).ready(function($) {
     // There are tabs to toggle which part table is displayed.
 
     // Define column definitions as there can be different number of columns
-    var submissionsDataTableColumnDefs = [];
+    var submissionsDataTableColumns = [];
     var visibleCols = [];
     var noOfColumns = $('table.submissionsDataTable th').length / $('table.submissionsDataTable').length;
     var showOrigReport = ($('table.submissionsDataTable th.creport').length > 0) ? true : false;
@@ -230,21 +230,21 @@ jQuery(document).ready(function($) {
     var multipleParts = ($('table.submissionsDataTable th.coverallgrade').length > 0) ? true : false;
     for (var i=0; i < noOfColumns; i++) {
         if (i == 2 || i == 3) {
-            submissionsDataTableColumnDefs.push({"aTargets": [ i ]});
+            submissionsDataTableColumns.push(null);
             visibleCols.push(true);
         } else if (i == 4) {
-            submissionsDataTableColumnDefs.push({"sClass": "right", "aTargets": [ i ]});
+            submissionsDataTableColumns.push({"sClass": "right"});
             visibleCols.push(true);
         } else if (i == 6 || (i == 8 && showOrigReport) || ((i == 8 && !showOrigReport) || (i == 10 && useGrademark))) {
-            submissionsDataTableColumnDefs.push({"sClass": "right", "aTargets": [ i ], "iDataSort": i-1, "sType":"numeric"});
+            submissionsDataTableColumns.push({"sClass": "right", "iDataSort": i-1, "sType":"numeric"});
             visibleCols.push(true);
         } else if (i == 1 || ((i >= 7 && !showOrigReport && !useGrademark)
                                 || (i >= 9 && ((!showOrigReport && useGrademark) || (showOrigReport && !useGrademark))) 
                                 || (i >= 11 && showOrigReport && useGrademark))) {
-            submissionsDataTableColumnDefs.push({"sClass": "center", "bSortable": false, "aTargets": [ i ]});
+            submissionsDataTableColumns.push({"sClass": "center", "bSortable": false});
             visibleCols.push(true);
         } else if ((i == 0) || (i == 5) || (i == 7 && showOrigReport) || ((i == 7 && !showOrigReport) || (i == 9 && useGrademark))) {
-            submissionsDataTableColumnDefs.push({"bVisible": true, "aTargets": [ i ]});
+            submissionsDataTableColumns.push({"bVisible": false});
             visibleCols.push(false);
         }
     }
@@ -258,7 +258,7 @@ jQuery(document).ready(function($) {
 
         partTables[part_id] = $('table#'+part_id).dataTable({
             "bProcessing": true,
-            "aoColumnDefs": submissionsDataTableColumnDefs,
+            "aoColumns": submissionsDataTableColumns,
             "aaSorting": [[ 2, "asc" ],[ 4, "asc" ]],
             "sAjaxSource": "ajax.php",
             "oLanguage": dataTablesLang,
@@ -285,7 +285,7 @@ jQuery(document).ready(function($) {
                 } catch ( e ) {
                 }
             },
-            "fnStateSaveParams": function (oSettings, oData) {
+            "fnStateSaveParams": function(oSettings, oData) {
                 oData.abVisCols = visibleCols;
             },
             "fnStateLoad": function (oSettings) {
@@ -293,6 +293,9 @@ jQuery(document).ready(function($) {
                     return JSON.parse( localStorage.getItem(part_id+'DataTables') );
                 } catch ( e ) {
                 }
+            },
+            "fnStateLoadParams": function(oSettings, oData) {
+                oData.abVisCols = visibleCols;
             },
             "fnDrawCallback":  function( oSettings ) {
                 initialiseDVLaunchers("all", 0, part_id, 0);
@@ -303,8 +306,6 @@ jQuery(document).ready(function($) {
                 initialiseUnanoymiseForm("all", 0, 0);
             }
         });
-
-        partTables[part_id].fnSetColumnVis(visibleCols.toString())
     });
 
     $('table.submissionsDataTable').each(function() {
@@ -510,6 +511,11 @@ jQuery(document).ready(function($) {
         }
 
         $('.editable_text').editable({
+            validate: function(value) {
+                if ($(this).attr('id').indexOf("marks_") >= 0 && (Math.floor(value) != value || !$.isNumeric(value))) {
+                    return M.str.turnitintooltwo.maxmarkserror;
+                }
+            },
             success: function(response, newValue) {
                 if(!response.success) {
                     return response.msg;
@@ -533,7 +539,8 @@ jQuery(document).ready(function($) {
             'combodate': {
                             'minuteStep': 1,
                             'minYear': 2000,
-                            'maxYear': theDate.getFullYear()+2
+                            'maxYear': theDate.getFullYear()+2,
+                            'smartDays': true
                         },
             success: function(response, newValue) {
                 if(!response.success) {
