@@ -3,6 +3,8 @@
 // Date: 2014-07-25
 // Language: en
 
+$string['turnitinula_btn'] = 'Please click here to read and accept the Agreement.';
+$string['turnitinula'] = 'You must accept the latest Turnitin User Agreement before you can make a submission.';
 $string['listsubmissionsdesc'] = 'User viewed the list of submissions at course';
 $string['viewsubmissiondesc'] = 'User viewed submission';
 $string['addsubmissiondesc'] = 'User added submission';
@@ -78,10 +80,11 @@ $string['partdberror'] = 'There was a problem entering Part {$a} into the databa
 $string['partupdateerror'] = 'There was a problem updating Part {$a} in the database<br />';
 $string['partdeleteerror'] = 'Could not delete assignment part {$a} data';
 $string['partdeletewarning'] = 'The assignment part you are trying to delete contains submissions. You will lose these submissions if you delete this assignment part.\n\nAre you sure you want to continue?';
-$string['partposterror'] = 'Start date must be before post date.<br />';
+$string['partposterror'] = 'Start date must be before post date.';
+$string['partposterror'] = 'Start date must be before post date.';
 $string['partgeterror'] = 'Could not get assignment part data';
 $string['partname'] = 'Assignment Part';
-$string['partnameerror'] = 'Part name can not left blank.<br />';
+$string['partnameerror'] = 'Part name can not left blank.';
 $string['partdueerror'] = 'Start date must be before due date.';
 $string['pending'] = 'Pending';
 $string['permissiondeniederror'] = 'You do not have the correct permission to complete the requested action';
@@ -236,6 +239,7 @@ $string['turnitinsubmissionid'] = 'Turnitin submission id';
 $string['defaults'] = 'Default Settings';
 $string['defaults_desc'] = 'The following settings will be the default settings used for new instances of the Moodle Direct Turnitin Assignment 2';
 $string['upgradeavailable'] = 'Upgrade Available';
+$string['upgradenotavailable'] = 'No Upgrades Available';
 $string['coursemodidincorrect'] = 'Course Module ID was incorrect';
 $string['coursemisconfigured'] = 'Course is misconfigured';
 $string['coursemodincorrect'] = 'Course module is incorrect';
@@ -265,7 +269,6 @@ $string['selectcoursecategory'] = 'Select Course Category';
 $string['module'] = 'Module';
 $string['source'] = 'Source';
 $string['similarity'] = 'Similarity';
-$string['turnitinula'] = 'You must accept the latest Turnitin User Agreement before you can make a submission. Please click here to read and accept the Agreement.';
 $string['moodlelinked'] = 'Linked to Moodle';
 $string['coursegettiierror'] = 'Could not get course data from Turnitin';
 $string['savecourseenddateerror'] = 'There was an error when trying to save a new course end date in Turnitin';
