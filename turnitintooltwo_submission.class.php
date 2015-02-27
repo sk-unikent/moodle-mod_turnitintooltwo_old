@@ -310,7 +310,7 @@ class turnitintooltwo_submission {
         $grades->userid = $this->userid;
         $params['idnumber'] = $cm->idnumber;
 
-        @include_once($CFG->dirroot."/lib/gradelib.php");
+        @include_once($CFG->libdir."/gradelib.php");
         grade_update('mod/turnitintooltwo', $turnitintooltwoassignment->turnitintooltwo->course, 'mod',
                         'turnitintooltwo', $turnitintooltwoassignment->turnitintooltwo->id, 0, $grades, $params);
 
@@ -385,6 +385,11 @@ class turnitintooltwo_submission {
             if (!$this->id = $DB->insert_record('turnitintooltwo_submissions', $submission)) {
                 return get_string('submissionupdateerror', 'turnitintooltwo');
             } else {
+                $assignment = new stdClass();
+                $assignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
+                $assignment->submitted = 1;
+                $DB->update_record('turnitintooltwo', $assignment);
+                
                 return array( "submission_id" => $newsubmission->getSubmissionId() );
             }
 
@@ -531,7 +536,7 @@ class turnitintooltwo_submission {
     /**
      * Update and save an individual submission from Turnitin
      *
-     * @param type $save - save in db regradlesss of changes
+     * @param type $save - save in db regardless of changes
      */
     public function update_submission_from_tii($save = false) {
         // Initialise Comms Object.
@@ -545,7 +550,7 @@ class turnitintooltwo_submission {
             $response = $turnitincall->readSubmission($submission);
             $readsubmission = $response->getSubmission();
 
-            $this->save_updated_submission_data($readsubmission, '', false, $save);
+            $this->save_updated_submission_data($readsubmission, false, $save);
             $this->get_submission_details();
         } catch (Exception $e) {
             $turnitincomms->handle_exceptions($e, 'tiisubmissiongeterror', false);
@@ -558,20 +563,21 @@ class turnitintooltwo_submission {
      * @global type $DB
      * @param type $tiisubmissiondata
      * @param type $bulk
-     * @param type $save - save in db regradlesss of changes
+     * @param type $save - save in db regardless of changes
      * @return type
      */
-    public function save_updated_submission_data($tiisubmissiondata, $turnitintooltwoassignment = "", 
-                                                    $bulk = false, $save = false) {
+    public function save_updated_submission_data($tiisubmissiondata, $bulk = false, $save = false) {
         global $DB, $CFG;
 
-        if (empty($turnitintooltwoassignment)) {
-            $turnitintooltwoassignment = new turnitintooltwo_assignment($this->turnitintooltwoid);
+        static $part;
+        if (empty($part)) {
+            $part = $DB->get_record("turnitintooltwo_parts", array("tiiassignid" => $tiisubmissiondata->getAssignmentId()));
         }
+        $turnitintooltwoassignment = new turnitintooltwo_assignment($part->turnitintooltwoid);
 
         $sub = new stdClass();
         $sub->submission_title = $tiisubmissiondata->getTitle();
-        $sub->submission_part = $this->submission_part;
+        $sub->submission_part = $part->id;
         $sub->submission_objectid = $tiisubmissiondata->getSubmissionId();
         $sub->turnitintooltwoid = $turnitintooltwoassignment->turnitintooltwo->id;
 
@@ -603,7 +609,7 @@ class turnitintooltwo_submission {
         // If save not passed in then only update if certain items have changed to save on database load.
         if ($this->submission_grade != $sub->submission_grade || $this->submission_score != $sub->submission_score ||
             $this->submission_modified != $sub->submission_modified || $this->submission_attempts != $sub->submission_attempts ||
-            $this->submission_unanon != $sub->submission_unanon) {
+            $this->submission_unanon != $sub->submission_unanon || $this->submission_part != $sub->submission_part) {
             $save = true;
         }
 
@@ -634,7 +640,7 @@ class turnitintooltwo_submission {
             }
 
             // Update gradebook.
-            @include_once($CFG->dirroot."/lib/gradelib.php");
+            @include_once($CFG->libdir."/gradelib.php");
             if ($sub->userid > 0 && $sub->submission_unanon) {
                 $user = new turnitintooltwo_user($sub->userid, "Learner");
 

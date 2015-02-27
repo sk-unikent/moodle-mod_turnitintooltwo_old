@@ -19,14 +19,25 @@
  * @copyright 2012 iParadigms LLC
  */
 
-require_once("../../config.php");
-require_once("lib.php");
-require_once("turnitintooltwo_view.class.php");
+require_once(__DIR__."/../../config.php");
+require_once(__DIR__."/lib.php");
+require_once(__DIR__."/turnitintooltwo_view.class.php");
 
 require_login();
 $action = required_param('action', PARAM_ALPHAEXT);
 
 switch ($action) {
+    case "check_anon":
+        $assignmentid = required_param('assignment', PARAM_INT);
+        $turnitintooltwoassignment = new turnitintooltwo_assignment($assignmentid);
+
+        $anonData = array(
+            'anon' => $turnitintooltwoassignment->turnitintooltwo->anon,
+            'submitted' => $turnitintooltwoassignment->turnitintooltwo->submitted
+        );
+        echo json_encode($anonData);
+        break;
+
     case "edit_field":
         if (!confirm_sesskey()) {
             throw new moodle_exception('invalidsesskey', 'error');
@@ -56,8 +67,11 @@ switch ($action) {
                     $fieldvalue = required_param('value', PARAM_RAW);
                     // We need to work out the users timezone or GMT offset.
                     $usertimezone = get_user_timezone();
+
                     if (is_numeric($usertimezone)) {
-                        if ($usertimezone > 0) {
+                        if ($usertimezone > 13) {
+                            $usertimezone = "";
+                        } else if ($usertimezone <= 13 && $usertimezone > 0) {
                             $usertimezone = "GMT+$usertimezone";
                         } else if ($usertimezone < 0) {
                             $usertimezone = "GMT$usertimezone";
@@ -65,9 +79,22 @@ switch ($action) {
                             $usertimezone = 'GMT';
                         }
                     }
-                    $fieldvalue = strtotime($fieldvalue.' '.$usertimezone);
 
-                    if ($fieldname == "dtpost" && $turnitintooltwoassignment->turnitintooltwo->anon && $fieldvalue < time()) {
+                    $fieldvalue = strtotime($fieldvalue.' '.$usertimezone);
+                    if ($fieldname == "dtpost" &&
+                        $turnitintooltwoassignment->turnitintooltwo->anon &&
+                        $turnitintooltwoassignment->turnitintooltwo->submitted == 1 &&
+                        $fieldvalue < time()) 
+                    {
+                        // Get the Turnitin course id
+                        $turnitin_cid = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course)->turnitin_cid;
+
+                        // Disable anonymous marking in Turnitin
+                        $assignment = new TiiAssignment();
+                        $assignment->setClassId($turnitin_cid);
+                        $assignment->setAnonymousMarking(0);
+
+                        // Update it in Moodle
                         $anon_assignment = new stdClass();
                         $anon_assignment->id = required_param('assignment', PARAM_INT);
                         $anon_assignment->anon = 0;
@@ -296,6 +323,15 @@ switch ($action) {
             $submission = $turnitintooltwoassignment->get_user_submissions($userid, $assignmentid, $partid);
             $submissionid = current(array_keys($submission));
 
+            if (!empty($submissionid)) {
+                $submission = new turnitintooltwo_submission($submissionid);
+                $submission->update_submission_from_tii(true);
+
+                // Get the submission details again in case the submission has been transferred within Turnitin.
+                $submission = $turnitintooltwoassignment->get_user_submissions($userid, $assignmentid, $partid);
+                $submissionid = current(array_keys($submission));
+            }
+
             $submission = new turnitintooltwo_submission($submissionid);
             if (empty($submissionid)) {
                 $user = new turnitintooltwo_user($userid, 'Learner', false);
@@ -303,18 +339,17 @@ switch ($action) {
                 $submission->firstname = $user->firstname;
                 $submission->lastname = $user->lastname;
                 $submission->userid = $user->id;
-            } else {
-                $submission->update_submission_from_tii(true);
             }
+
             $useroverallgrades = array();
 
             $PAGE->set_context(context_module::instance($cm->id));
 
             $turnitintooltwoview = new turnitintooltwo_view();
+            $submissionrow["submission_id"] = $submission->submission_objectid;
             $submissionrow["row"] = $turnitintooltwoview->get_submission_inbox_row($cm, $turnitintooltwoassignment, $parts,
                                                                                 $partid, $submission, $useroverallgrades,
                                                                                 $istutor, 'refresh_row');
-            $submissionrow["submission_id"] = $submission->submission_objectid;
 
             echo json_encode($submissionrow);
         }
@@ -637,24 +672,27 @@ switch ($action) {
         }
         $data = array("connection_status" => "fail", "msg" => get_string('connecttestcommerror', 'turnitintooltwo'));
 
-        $config = turnitintooltwo_admin_config();
-        if ((int)$config->accountid != 0 && !empty($config->apiurl) && !empty($config->secretkey)) {
-            if (is_siteadmin()) {
-                // Initialise API connection.
-                $turnitincomms = new turnitintooltwo_comms();
-                $istestingconnection = true; // Provided by Androgogic to override offline mode for testing connection.
-                $tiiapi = $turnitincomms->initialise_api($istestingconnection);
+        if (is_siteadmin()) {
+            // Initialise API connection.
 
-                $class = new TiiClass();
-                $class->setTitle('Test finding a class to see if connection works');
+            $account_id = required_param('account_id', PARAM_RAW);
+            $account_shared = required_param('account_shared', PARAM_RAW);
+            $url = required_param('url', PARAM_RAW);
 
-                try {
-                    $response = $tiiapi->findClasses($class);
-                    $data["connection_status"] = "success";
-                    $data["msg"] = get_string('connecttestsuccess', 'turnitintooltwo');
-                } catch (Exception $e) {
-                    $turnitincomms->handle_exceptions($e, 'connecttesterror', false);
-                }
+            $turnitincomms = new turnitintooltwo_comms($account_id, $account_shared, $url);
+
+            $istestingconnection = true; // Provided by Androgogic to override offline mode for testing connection.
+            $tiiapi = $turnitincomms->initialise_api($istestingconnection);
+
+            $class = new TiiClass();
+            $class->setTitle('Test finding a class to see if connection works');
+
+            try {
+                $response = $tiiapi->findClasses($class);
+                $data["connection_status"] = "success";
+                $data["msg"] = get_string('connecttestsuccess', 'turnitintooltwo');
+            } catch (Exception $e) {
+                $turnitincomms->handle_exceptions($e, 'connecttesterror', false);
             }
         }
         echo json_encode($data);

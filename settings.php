@@ -20,16 +20,16 @@
  */
 
 if ($ADMIN->fulltree) {
-    include_once($CFG->dirroot.'/mod/turnitintooltwo/lib.php');
+    include_once(__DIR__.'/lib.php');
+    require_once(__DIR__."/turnitintooltwo_view.class.php");
 
-    require_once("turnitintooltwo_view.class.php");
     $turnitintooltwoview = new turnitintooltwo_view();
 
     $config = turnitintooltwo_admin_config();
 
     $library_warning = '';
     if (!extension_loaded('XMLWriter')) {
-        $library_warning = html_writer::tag('div', get_string('noxmlwriterlibrary', 'turnitintooltwo'), 
+        $library_warning = html_writer::tag('div', get_string('noxmlwriterlibrary', 'turnitintooltwo'),
                                                 array('class' => 'library_not_present_warning'));
     }
 
@@ -39,21 +39,21 @@ if ($ADMIN->fulltree) {
                                             "href" => $CFG->wwwroot."/mod/turnitintooltwo/css/styles.css"));
 
     $current_section = optional_param('section', '', PARAM_ALPHAEXT);
-    
+
     $version = (empty($module->version)) ? $module->versiondisk : $module->version;
 
     if ($current_section == 'modsettingturnitintooltwo') {
-    
         if ($CFG->branch <= 25) {
             $tabmenu .= html_writer::tag('script', '', array("type" => "text/javascript",
                                                     "src" => $CFG->wwwroot."/mod/turnitintooltwo/jquery/jquery-1.8.2.min.js")).
                         html_writer::tag('script', '', array("type" => "text/javascript",
                                                     "src" => $CFG->wwwroot."/mod/turnitintooltwo/jquery/turnitintooltwo_settings.js"));
         } else {
-                $PAGE->requires->jquery();
-                $PAGE->requires->jquery_plugin('turnitintooltwo-turnitintooltwo_settings', 'mod_turnitintooltwo');
-                $PAGE->requires->string_for_js('upgradeavailable', 'turnitintooltwo');
+            $PAGE->requires->jquery();
+            $PAGE->requires->jquery_plugin('turnitintooltwo-turnitintooltwo_settings', 'mod_turnitintooltwo');
         }
+
+        $PAGE->requires->string_for_js('upgradeavailable', 'turnitintooltwo');
 
         if (is_siteadmin()) {
             $data = turnitintooltwo_updateavailable($version);
@@ -65,7 +65,7 @@ if ($ADMIN->fulltree) {
                 $upgrade .= html_writer::tag('a', $OUTPUT->pix_icon('refresh', get_string('checkingupgrade', 'turnitintooltwo'), 'mod_turnitintooltwo'), array('href' => '#', 'class' => 'tii_upgrade_check', 'id' => 'version_'.$version));
             }
         }
-        
+
         $upgrade .= html_writer::tag('span', $OUTPUT->pix_icon('loader', get_string('checkingupgrade', 'turnitintooltwo'), 'mod_turnitintooltwo'), array('class' => 'tii_upgrading_check'));
     }
 
@@ -135,11 +135,6 @@ if ($ADMIN->fulltree) {
                                                     get_string('turnitinuseerater_desc', 'turnitintooltwo'),
                                                     0, $ynoptions));
 
-    $settings->add(new admin_setting_configselect('turnitintooltwo/userepository',
-                                                    get_string('turnitinuserepository', 'turnitintooltwo'),
-                                                    get_string('turnitinuserepository_desc', 'turnitintooltwo'),
-                                                    0, $ynoptions));
-
     $settings->add(new admin_setting_configselect('turnitintooltwo/useanon',
                                                     get_string('turnitinuseanon', 'turnitintooltwo'),
                                                     get_string('turnitinuseanon_desc', 'turnitintooltwo'),
@@ -149,6 +144,18 @@ if ($ADMIN->fulltree) {
                                                     get_string('transmatch', 'turnitintooltwo'),
                                                     get_string('transmatch_desc', 'turnitintooltwo'),
                                                     0, $ynoptions));
+
+    $repositoryoptions = array(
+            0 => get_string('repositoryoptions_0', 'turnitintooltwo'),
+            1 => get_string('repositoryoptions_1', 'turnitintooltwo'),
+            2 => get_string('repositoryoptions_2', 'turnitintooltwo'),
+            3 => get_string('repositoryoptions_3', 'turnitintooltwo')
+        );
+
+    $settings->add(new admin_setting_configselect('turnitintooltwo/repositoryoption',
+                                                    get_string('turnitinrepositoryoptions', 'turnitintooltwo'),
+                                                    get_string('turnitinrepositoryoptions_desc', 'turnitintooltwo'),
+                                                    0, $repositoryoptions));
 
     if (empty($config->agreement)) {
         $config->agreement = get_string('turnitintooltwoagreement_default', 'turnitintooltwo');
@@ -273,15 +280,23 @@ if ($ADMIN->fulltree) {
                                                     get_string('reportgenspeed', 'turnitintooltwo'),
                                                     '', 0, $genoptions ));
 
-    $suboptions = array( 0 => get_string('norepository', 'turnitintooltwo'), 1 =>
-                                            get_string('standardrepository', 'turnitintooltwo'));
-    if (!empty($config->userepository)) {
-        array_push($suboptions, get_string('institutionalrepository', 'turnitintooltwo'));
-    }
+    $suboptions = array( 0 => get_string('norepository', 'turnitintooltwo'), 
+                        1 => get_string('standardrepository', 'turnitintooltwo'));
 
-    $settings->add(new admin_setting_configselect('turnitintooltwo/default_submitpapersto',
+    switch ($config->repositoryoption) {
+        case 0; // Standard options
+            $settings->add(new admin_setting_configselect('turnitintooltwo/default_submitpapersto',
                                                     get_string('submitpapersto', 'turnitintooltwo'),
                                                     '', 1, $suboptions ));
+            break;
+        case 1; // Standard options + Allow Instituional Repository
+            $suboptions[2] = get_string('institutionalrepository', 'turnitintooltwo');
+
+            $settings->add(new admin_setting_configselect('turnitintooltwo/default_submitpapersto',
+                                                    get_string('submitpapersto', 'turnitintooltwo'),
+                                                    '', 1, $suboptions ));
+            break;
+    }
 
     $settings->add(new admin_setting_configselect('turnitintooltwo/default_spapercheck',
                                                     get_string('spapercheck', 'turnitintooltwo'),

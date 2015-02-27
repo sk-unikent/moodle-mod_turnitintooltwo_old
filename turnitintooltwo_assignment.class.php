@@ -19,9 +19,9 @@
  * @copyright 2012 iParadigms LLC *
  */
 
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_comms.class.php');
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_user.class.php');
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_submission.class.php');
+require_once(__DIR__.'/turnitintooltwo_comms.class.php');
+require_once(__DIR__.'/turnitintooltwo_user.class.php');
+require_once(__DIR__.'/turnitintooltwo_submission.class.php');
 
 class turnitintooltwo_assignment {
 
@@ -660,7 +660,7 @@ class turnitintooltwo_assignment {
             }
             $assignment->setAllowNonOrSubmissions($this->turnitintooltwo->allownonor);
             $assignment->setLateSubmissionsAllowed($this->turnitintooltwo->allowlate);
-            if ($config->userepository) {
+            if ($config->repositoryoption == 1) {
                 $assignment->setInstitutionCheck((isset($this->turnitintooltwo->institution_check)) ?
                                                         $this->turnitintooltwo->institution_check : 0);
             }
@@ -868,7 +868,7 @@ class turnitintooltwo_assignment {
         }
 
         // Define grade settings.
-        @include_once($CFG->dirroot . "/lib/gradelib.php");
+        @include_once($CFG->libdir . "/gradelib.php");
         $params = array('deleted' => 1);
         grade_update('mod/turnitintooltwo', $turnitintooltwo->course, 'mod', 'turnitintooltwo', $id, 0, null, $params);
 
@@ -906,12 +906,8 @@ class turnitintooltwo_assignment {
         $turnitintooltwo = new stdClass();
         $turnitintooltwo->id = $toolid;
         $turnitintooltwo->numparts = $turnitintooltwonow->numparts - 1;
+        $turnitintooltwo->needs_updating = 1;
         $DB->update_record("turnitintooltwo", $turnitintooltwo);
-
-        $assignment = new stdClass();
-        $assignment->id = $toolid;
-        $assignment->needs_updating = 1;
-        $DB->update_record("turnitintooltwo", $assignment);
         return true;
     }
 
@@ -1022,9 +1018,22 @@ class turnitintooltwo_assignment {
         $return["field"] = $fieldname;
         switch ($fieldname) {
             case "partname":
-                if (empty($fieldvalue)) {
+                $fieldvalue = trim($fieldvalue);
+                $partnames = $DB->get_records_select('turnitintooltwo_parts', 
+                                                    ' turnitintooltwoid = ? AND id != ? ',
+                                                    array($partdetails->turnitintooltwoid, $partid), '', 'partname');
+
+                $names = array();
+                foreach ($partnames as $part) {
+                    $names[] = strtolower($part->partname);
+                }
+
+                if (empty($fieldvalue) || ctype_space($fieldvalue)) {
                     $return['success'] = false;
                     $return['msg'] = get_string('partnameerror', 'turnitintooltwo');
+                } else if (in_array(trim(strtolower($fieldvalue)), $names)) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('uniquepartname', 'turnitintooltwo');
                 } else if (strlen($fieldvalue) > 40) {
                     $return['success'] = false;
                     $return['msg'] = get_string('partnametoolarge', 'turnitintooltwo');
@@ -1133,9 +1142,10 @@ class turnitintooltwo_assignment {
      *
      * @global type $USER
      * @global type $DB
+     * @param boolean $createevent - setting to determine whether to create a calendar event.
      * @return boolean
      */
-    public function edit_moodle_assignment() {
+    public function edit_moodle_assignment($createevent = true) {
         global $USER, $DB, $CFG;
 
         $config = turnitintooltwo_admin_config();
@@ -1171,6 +1181,9 @@ class turnitintooltwo_assignment {
         }
         $partids = array_keys($parts);
 
+        // Update Grademark setting depending on config setting.
+        $this->turnitintooltwo->usegrademark = $config->usegrademark;
+
         // Set the checkbox settings for updates.
         $this->turnitintooltwo->erater_spelling = (isset($this->turnitintooltwo->erater_spelling)) ?
                                                         $this->turnitintooltwo->erater_spelling : 0;
@@ -1204,7 +1217,7 @@ class turnitintooltwo_assignment {
                 $assignment->setAnonymousMarking($this->turnitintooltwo->anon);
             }
             $assignment->setLateSubmissionsAllowed($this->turnitintooltwo->allowlate);
-            if ($config->userepository) {
+            if ($config->repositoryoption == 1) {
                 $assignment->setInstitutionCheck((isset($this->turnitintooltwo->institution_check)) ?
                                                         $this->turnitintooltwo->institution_check : 0);
             }
@@ -1293,7 +1306,7 @@ class turnitintooltwo_assignment {
                 // Delete existing events for this assignment part.
                 $eventname = $turnitintooltwonow->name." - ".$partnow->partname;
                 $DB->delete_records_select('event', " modulename = 'turnitintooltwo' AND instance = ? AND name = ? ",
-                                            array($this->id, $eventname));
+                                              array($this->id, $eventname));
             } else {
                 if (!$dbpart = $DB->insert_record('turnitintooltwo_parts', $part)) {
                     turnitintooltwo_print_error('partdberror', 'turnitintooltwo', null, $i, __FILE__, __LINE__);
@@ -1301,9 +1314,11 @@ class turnitintooltwo_assignment {
                 }
             }
 
-            require_once($CFG->dirroot.'/calendar/lib.php');
-            $event = new calendar_event($properties);
-            $event->update($properties, false);
+            if ($createevent == true) {
+                require_once($CFG->dirroot.'/calendar/lib.php');
+                $event = new calendar_event($properties);
+                $event->update($properties, false);
+            }
         }
 
         $this->turnitintooltwo->timemodified = time();
@@ -1414,7 +1429,7 @@ class turnitintooltwo_assignment {
             foreach ($readsubmissions as $readsubmission) {
                 $turnitintooltwosubmission = new turnitintooltwo_submission($readsubmission->getSubmissionId(),
                                                                                 "turnitin", $this, $part->id);
-                $turnitintooltwosubmission->save_updated_submission_data($readsubmission, $this, true);
+                $turnitintooltwosubmission->save_updated_submission_data($readsubmission, true);
             }
 
         } catch (Exception $e) {

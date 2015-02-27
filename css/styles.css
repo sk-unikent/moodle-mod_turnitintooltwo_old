@@ -3,6 +3,32 @@
     Created on : 19-Nov-2012, 14:58:41
     Author     : John McGettrick
 */
+.tii_digital_receipt {
+    display: inline-block;
+    width: 150px;
+}
+#tii_digital_receipt_box {
+    padding: 20px;
+    background: #fff;
+}
+
+#tii_digital_receipt_box .generaltable {
+    width: 100%;
+}
+
+#tii_digital_receipt_box .logo {
+    display: block;
+    margin: 0 auto;
+}
+
+#tii_receipt_print {
+    text-align: right;
+    display: block;
+}
+
+#tii_digital_receipt_icon {
+    margin-top: -3px;
+}
 
 .mod_turnitintooltwo .submit_nothing img {
     padding-right: 8px;
@@ -310,7 +336,35 @@ body[class*='-moodle23'] .mod_turnitintooltwo  .centered_cb_cell input {
 }
 
 #colorbox {
+    margin-top: 60px;
     outline: 0 !important;
+    overflow: visible !important;
+}
+
+#cboxContent {
+    margin-top: 0 !important;
+}
+
+#tii_close_bar {
+    position: fixed;
+    z-index: 9999;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 45px;
+    background: rgba(0, 0, 0, .3);
+}
+
+#tii_close_bar a {
+    color: #fff;
+    display: block;
+    background: #000;
+    width: 100px;
+    text-align: center;
+    float: right;
+    text-decoration: none;
+    height: 45px;
+    line-height: 43px;
 }
 
 .cboxIframe {
@@ -319,6 +373,10 @@ body[class*='-moodle23'] .mod_turnitintooltwo  .centered_cb_cell input {
 
 #page-mod-turnitintooltwo-view div {
     margin-bottom: 0;
+}
+
+#page-mod-turnitintooltwo-view .region-content {
+    padding: 0;
 }
 
 .turnitin_ula_text {
@@ -334,9 +392,20 @@ body[class*='-moodle23'] .mod_turnitintooltwo  .centered_cb_cell input {
     margin-top: 0;
 }
 
+h3.main {
+    line-height: 40px;
+}
+
+.tii_upgrade_check,
+.tii_upgrading_check {
+    width: 30px;
+    height: 30px;
+    display: inline-block;
+}
 .tii_upgrade_check img,
 .tii_upgrading_check img {
     padding: 0 0 5px 5px;
+    vertical-align: middle;
 }
 
 .mod_turnitintooltwo .fitem_fbutton {
@@ -571,6 +640,10 @@ body[class*='-moodle23'] .mod_turnitintooltwo  .centered_cb_cell input {
 
 .mod_turnitintooltwo .tii_upgrade_check {
     text-decoration: underline;
+    cursor: pointer;
+}
+
+.default_open {
     cursor: pointer;
 }
 

@@ -35,7 +35,7 @@ jQuery(document).ready(function($) {
 	    }
 
 	    $('.tii_upgrade_check').hide();
-	    $('.tii_upgrading_check').show();
+	    $('.tii_upgrading_check').css('display', 'inline-block');
 	    var current_version = $(this).attr('id').split('_')[1];
 
     	$.ajax({
@@ -85,11 +85,15 @@ jQuery(document).ready(function($) {
 		        url = "../mod/turnitintooltwo/ajax.php";
 		    }
 
+		    var accountid = $('#id_s_turnitintooltwo_accountid').val();
+		    var accountshared = $('#id_s_turnitintooltwo_secretkey').val();
+		    var accounturl = $('#id_s_turnitintooltwo_apiurl').val();
+
 		    $.ajax({
 		        type: "POST",
 		        url: url,
 		        dataType: "json",
-		        data: {action: "test_connection", sesskey: M.cfg.sesskey},
+		        data: {action: "test_connection", sesskey: M.cfg.sesskey, account_id: accountid, account_shared: accountshared, url: accounturl},
 		        success: function(data) {
 		            eval(data);
 

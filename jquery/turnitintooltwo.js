@@ -46,11 +46,6 @@ jQuery(document).ready(function($) {
         }
     });
 
-        // If we are in submission window then show close window text
-    if ($('.submission_form_container').length > 0) {
-        $('.upload #cboxClose', top.document).attr("title", M.str.turnitintooltwo.close).attr("name", M.str.turnitintooltwo.close).css("display", "block");
-    }
-
     // Show loading if submission passes validation
     $(document).on('submit', '.submission_form_container form', function() {
         try {
@@ -298,6 +293,7 @@ jQuery(document).ready(function($) {
                 oData.abVisCols = visibleCols;
             },
             "fnDrawCallback":  function( oSettings ) {
+                initialiseDigitalReceipt();
                 initialiseDVLaunchers("all", 0, part_id, 0);
                 initialiseRefreshRow("all", 0, part_id, 0);
                 initialiseUploadBox("all", 0, 0, 0);
@@ -359,9 +355,9 @@ jQuery(document).ready(function($) {
                 window.parent.$('.upload_box').colorbox.resize({
                     width: "80%",
                     height: "80%"
-                });     
+                });
             }
-            
+
             $('iframe.cboxIframe').attr('src', $('iframe.cboxIframe').attr('src'));
         });
     }
@@ -372,7 +368,7 @@ jQuery(document).ready(function($) {
         window.parent.$('.upload_box').colorbox.resize({
             width: "800px",
             height: "565px"
-        });     
+        });
     });
 
     // Enrol all students link on the enrolled students page
@@ -400,13 +396,17 @@ jQuery(document).ready(function($) {
     if ($('.rubric_manager_launch').length > 0) {
         $('.rubric_manager_launch').colorbox({
             iframe:true, width:"832px", height:"682px", opacity: "0.7", className: "rubric_manager", transition: "none",
-            onLoad: function() { getLoadingGif(); },
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
             onCleanup:function() {
                 hideLoadingGif();
                 // Refresh Rubric drop down in add/update form
                 if ($(this).attr("id") != 'rubric_manager_inbox_launch') {
                     refreshRubricSelect();
                 }
+                $('#tii_close_bar').remove();
             }
         });
     }
@@ -415,8 +415,14 @@ jQuery(document).ready(function($) {
     if ($('.rubric_view_launch').length > 0) {
         $('.rubric_view_launch').colorbox({
             iframe:true, width:"832px", height:"682px", opacity: "0.7", className: "rubric_view", transition: "none",
-            onLoad: function() { getLoadingGif(); },
-            onCleanup: function() { hideLoadingGif(); }
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup: function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            }
         });
     }
 
@@ -433,8 +439,14 @@ jQuery(document).ready(function($) {
     if ($('.quickmark_manager_launch').length > 0 || $('.plagiarism_turnitin_quickmark_manager_launch').length > 0) {
         $('.quickmark_manager_launch, .plagiarism_turnitin_quickmark_manager_launch').colorbox({
             iframe:true, width:"700px", height:"432px", opacity: "0.7", className: "quickmark_manager", transition: "none",
-            onLoad: function() { getLoadingGif(); },
-            onCleanup: function() { hideLoadingGif(); }
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup: function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            }
         });
     }
 
@@ -442,8 +454,14 @@ jQuery(document).ready(function($) {
     if ($('.peermark_manager_launch').length > 0) {
         $('.peermark_manager_launch').colorbox({
             iframe:true, width:"802px", height:"772px", opacity: "0.7", className: "peermark_manager", transition: "none",
-            onLoad: function() { getLoadingGif(); },
-            onCleanup:function() { hideLoadingGif(); },
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup:function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            },
             onClosed:function() {
                 var idStr = $(this).attr("id").split("_");
                 refreshPeermarkAssignments(idStr[2], 1);
@@ -455,8 +473,14 @@ jQuery(document).ready(function($) {
     if ($('.peermark_reviews_launch').length > 0) {
         $('.peermark_reviews_launch').colorbox({
             iframe:true, width:"802px", height:"772px", opacity: "0.7", className: "peermark_reviews", transition: "none",
-            onLoad: function() { getLoadingGif(); },
-            onCleanup: function() { hideLoadingGif(); }
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup: function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            }
         });
     }
 
@@ -464,8 +488,14 @@ jQuery(document).ready(function($) {
     if ($(".messages_inbox").length > 0) {
         $(".messages_inbox").colorbox({
             iframe:true, width:"772px", height:"772px", opacity: "0.7", className: "messages", transition: "none", closeButton: false,
-            onLoad: function() { getLoadingGif(); },
-            onCleanup: function() { hideLoadingGif(); },
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup: function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            },
             onClosed:function() {
                 refreshUserMessages();
             }
@@ -489,11 +519,7 @@ jQuery(document).ready(function($) {
             var height = $(window).height();
             dvWindow.document.write('<title>Document Viewer</title>');
             dvWindow.document.write('<style>html, body { margin: 0; padding: 0; border: 0; }</style>');
-            if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
-                dvWindow.document.write('<iframe id="dvWindow" name="dvWindow" width="'+width+'" height="'+height+'" sandbox="allow-popups allow-same-origin allow-top-navigation allow-forms allow-scripts"></iframe>');
-            } else {
-                dvWindow.document.write('<frameset><frame id="dvWindow" name="dvWindow"></frame></frameset>');
-            }
+            dvWindow.document.write('<frameset><frame id="dvWindow" name="dvWindow"></frame></frameset>');
             dvWindow.document.getElementById('dvWindow').src = url;
             dvWindow.document.close();
             if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
@@ -549,6 +575,20 @@ jQuery(document).ready(function($) {
             $('.export_data').append('<span class="empty-dash">--</span>');
         }
 
+        $('.editable_postdue').on("click", function() {
+            var $this = $(this);
+            $.ajax({
+                type: "POST",
+                url: "ajax.php",
+                dataType: "json",
+                data: {action: 'check_anon', assignment: $('#assignment_id').html()},
+                success: function(data) {
+                    $this.data('anon', data['anon']);
+                    $this.data('submitted', data['submitted']);
+                }
+            });
+        });
+
         var theDate = new Date();
         $('.editable_date').editable({
             'type': 'combodate',
@@ -556,11 +596,25 @@ jQuery(document).ready(function($) {
             'viewformat': 'D MMM YYYY, HH:mm',
             'template': 'D MMM YYYY  HH:mm',
             'combodate': {
-                            'minuteStep': 1,
-                            'minYear': 2000,
-                            'maxYear': theDate.getFullYear()+2,
-                            'smartDays': true
-                        },
+                'minuteStep': 1,
+                'minYear': 2000,
+                'maxYear': theDate.getFullYear()+2,
+                'smartDays': true
+            },
+            validate: function(value) {
+                if( value.format("X") < moment().unix() && 
+                    $(this).hasClass('editable_postdue') &&
+                    $(this).data('anon') == 1 &&
+                    $(this).data('submitted') == 1 )
+                {
+                    if ( ! confirm(M.str.turnitintooltwo.disableanonconfirm)) { 
+                        $('.editable-open').editableContainer('hide');
+
+                        // Validation only fails if string is returned (We need a string).
+                        return ' ';
+                    }
+                }
+            },
             success: function(response, newValue) {
                 if(!response.success) {
                     return response.msg;
@@ -788,7 +842,7 @@ jQuery(document).ready(function($) {
                         success: function(data) {
                             eval(data);
                             if (data.status == "success") {
-                                parent.$.fn.colorbox.close();
+                                $.colorbox.close()
                                 $('#submission_'+submission_id).attr('href', M.cfg.wwwroot+"/user/view.php?id="+data.userid+"&course="+data.courseid);
                                 $('#submission_'+submission_id).html(data.name);
                                 $('#submission_'+submission_id).removeClass('unanonymise cboxElement');
@@ -821,20 +875,22 @@ jQuery(document).ready(function($) {
                     window.parent.$('.upload_box').colorbox.resize({
                        width: "80%",
                        height: "80%"
-                    });  
+                    });
                 }
             },
             onLoad: function() {
-                $('.upload #cboxClose').hide();
                 getLoadingGif();
+                lightBoxCloseButton();
             },
             onClosed: function() { hideLoadingGif(); },
             onCleanup:function() {
                 hideLoadingGif();
                 var idStr = $(this).attr("id").split("_");
                 refreshInboxRow("upload", idStr[1], idStr[2], idStr[3]);
+
+                $('#tii_close_bar').remove();
             },
-            iframe:true, width:colorBoxWidth, height:colorBoxHeight, opacity: "0.7", className: "upload", transition: "none", close: ''
+            iframe:true, width:colorBoxWidth, height:colorBoxHeight, opacity: "0.7", className: "upload", transition: "none"
         });
     }
 
@@ -856,8 +912,14 @@ jQuery(document).ready(function($) {
         // Open an iframe light box which requests all the submissions as pdfs from Turnitin
         $('#tabs-'+part_id+' .downloadpdf_box').colorbox({
             iframe:true, width:"40%", height:"60%", opacity: "0.7", className: "downloadpdf_window", transition: "none",
-            onLoad: function() { getLoadingGif(); },
-            onCleanup: function() { hideLoadingGif(); },
+            onLoad: function() {
+                lightBoxCloseButton();
+                getLoadingGif();
+            },
+            onCleanup: function() {
+                $('#tii_close_bar').remove();
+                hideLoadingGif();
+            },
             onClosed: function() {
                 refreshUserMessages();
             }
@@ -887,6 +949,30 @@ jQuery(document).ready(function($) {
             return false;
         });
     }
+
+    function lightBoxCloseButton() {
+        $('body').append('<div id="tii_close_bar"><a href="#" onclick="$.colorbox.close(); return false;">' + M.str.turnitintooltwo.closebutton + '</a></div>');
+    }
+
+    function initialiseDigitalReceipt() {
+        if ($('.tii_digital_receipt').length > 0) {
+            $('.tii_digital_receipt').colorbox({
+                iframe:true, width:"832px", height:"482px", opacity: "0.7", className: "rubric_view", transition: "none",
+                onLoad: function() {
+                    lightBoxCloseButton();
+                    getLoadingGif();
+                },
+                onCleanup: function() {
+                    $('#tii_close_bar').remove();
+                    hideLoadingGif();
+                }
+            });
+        }
+    }
+
+    $('#tii_receipt_print').click(function() {
+        window.print();
+    });
 
     function initialiseHiddenZipDownloads(part_id) {
         // Unbind the event first to stop it being binded multiple times
@@ -1034,6 +1120,8 @@ jQuery(document).ready(function($) {
                 if (submission_id == 0) {
                     link += "_0";
                     submission_id = data.submission_id;
+                } else if (data.submission_id == null && submission_id != 0) {
+                    link = link+"_"+submission_id;
                 } else {
                     link = link+"_"+data.submission_id;
                 }
@@ -1085,5 +1173,4 @@ jQuery(document).ready(function($) {
             }
         }
     }
-    
 });

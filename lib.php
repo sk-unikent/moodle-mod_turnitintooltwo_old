@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once($CFG->dirroot.'/mod/turnitintooltwo/turnitintooltwo_assignment.class.php');
+require_once(__DIR__.'/turnitintooltwo_assignment.class.php');
 
 // Constants.
 define('TURNITINTOOLTWO_MAX_FILE_UPLOAD_SIZE', 20971520);
@@ -153,8 +153,25 @@ function turnitintooltwo_activitylog($string, $activity) {
  * @param  boolean $nullifnone
  */
 function turnitintooltwo_update_grades($turnitintooltwo, $userid = 0, $nullifnone = true) {
+    global $DB, $USER;
+
     $turnitintooltwoassignment = new turnitintooltwo_assignment($turnitintooltwo->id);
-    $turnitintooltwoassignment->edit_moodle_assignment();
+    $turnitintooltwoassignment->edit_moodle_assignment(false);
+
+    // Update events in the calendar.
+    $parts = $DB->get_records_select("turnitintooltwo_parts", " turnitintooltwoid = ? ",
+                                        array($turnitintooltwo->id), 'id ASC');
+    foreach ($parts as $part) {
+        $event = $DB->get_record_select("event",
+                                        " modulename = 'turnitintooltwo' AND instance = ? AND courseid = ? AND name LIKE ? ",
+                                        array($turnitintooltwo->id, $turnitintooltwo->course, '% - '.$part->partname));
+        $updatedevent = new stdClass();
+        $updatedevent->id = $event->id;
+        $updatedevent->userid = $USER->id;
+        $updatedevent->name = $turnitintooltwo->name." - ".$part->partname;
+
+        $DB->update_record('event', $updatedevent);
+    }
 }
 
 /**
@@ -347,7 +364,7 @@ function turnitintooltwo_duplicate_recycle($courseid, $action) {
                 $assignment->setAnonymousMarking($turnitintooltwoassignment->turnitintooltwo->anon);
             }
             $assignment->setLateSubmissionsAllowed($turnitintooltwoassignment->turnitintooltwo->allowlate);
-            if ($config->userepository) {
+            if ($config->repositoryoption == 1) {
                 $assignment->setInstitutionCheck((isset($turnitintooltwoassignment->turnitintooltwo->institution_check)) ?
                                 $turnitintooltwoassignment->turnitintooltwo->institution_check : 0);
             }
@@ -1145,7 +1162,7 @@ function turnitintooltwo_getusers() {
         }
 
         $return["aaData"][] = array($checkbox, ($user->turnitin_uid == 0) ?
-                                '' : $user->turnitin_uid, format_string($user->lastname), 
+                                '' : $user->turnitin_uid, format_string($user->lastname),
                                         format_string($user->firstname), $pseudoemail);
     }
     $return["sEcho"] = $secho;
@@ -1265,7 +1282,7 @@ function turnitintooltwo_show_browser_new_course_form() {
     $elements[] = array('header', 'create_course_fieldset', get_string('createcourse', 'turnitintooltwo'));
     $displaylist = array();
     $parentlist = array();
-    require_once("../../course/lib.php");
+    require_once($CFG->dirroot."/course/lib.php");
 
     if (file_exists($CFG->libdir.'/coursecatlib.php')) {
         require_once($CFG->libdir.'/coursecatlib.php');
