@@ -505,6 +505,8 @@ jQuery(document).ready(function($) {
     // Open the DV in a new window in such a way as to not be blocked by popups.
     $(document).on('click', '.default_open, .origreport_open, .grademark_open', function() {
         var proceed = true;
+
+        // Show resubmission grade warning.
         if ($(this).hasClass('graded_warning')) {
             if (!confirm(M.str.turnitintooltwo.resubmissiongradewarn)) {
                 proceed = false;
@@ -562,6 +564,9 @@ jQuery(document).ready(function($) {
                 }
             },
             success: function(response, newValue) {
+                var tabId = $(this).parentsUntil('.ui-tabs-panel').parent().attr('aria-labelledby');
+                $('#'+tabId).text(newValue);
+                
                 if(!response.success) {
                     return response.msg;
                 } else if (response.field == "maxmarks") {
@@ -1049,6 +1054,8 @@ jQuery(document).ready(function($) {
     // Open the document viewer within a frame in a new tab
     function openDV(dvtype, submission_id, part_id, user_id) {
         var proceed = true;
+
+        // Show resubmission grade warning.
         if ($('#grademark_'+submission_id+'_'+part_id+'_'+user_id).hasClass('graded_warning') && dvtype != 'downloadoriginal') {
             if (!confirm(M.str.turnitintooltwo.resubmissiongradewarn)) {
                 proceed = false;
@@ -1173,4 +1180,16 @@ jQuery(document).ready(function($) {
             }
         }
     }
+
+    $('#select_all_checkbox').on('click', function() {
+        if ($(this).is(':checked')) {
+            $('.inbox_checkbox').each(function() {
+                $(this).prop('checked', true);
+            });
+        } else {
+            $('.inbox_checkbox').each(function() {
+                $(this).prop('checked', false);
+            });
+        }
+    });
 });

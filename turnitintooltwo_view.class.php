@@ -322,7 +322,7 @@ class turnitintooltwo_view {
             $eulaaccepted = (!$user->user_agreement_accepted) ? $user->get_accepted_user_agreement() : $user->user_agreement_accepted;
         }
 
-        $parts = $turnitintooltwoassignment->get_parts_available_to_submit();
+        $parts = $turnitintooltwoassignment->get_parts_available_to_submit(0, $istutor);
         if (!empty($parts)) {
 
             $elements = array();
@@ -486,7 +486,7 @@ class turnitintooltwo_view {
         // Do the table headers.
         $cells = array();
         $cells["part"] = new html_table_cell('part');
-        $cells["checkbox"] = new html_table_cell('&nbsp;');
+        $cells["checkbox"] = new html_table_cell( ($istutor) ? html_writer::checkbox(false, false, false, '', array("id" => "select_all_checkbox", "class" => "inbox_checkbox")) : '&nbsp;' );
         $cells["student"] = ($istutor) ? new html_table_cell(get_string('student', 'turnitintooltwo')) : new html_table_cell();
         $cells["student"]->attributes['class'] = 'left';
         $cells["title"] = new html_table_cell(get_string('submissiontitle', 'turnitintooltwo'));
@@ -1028,63 +1028,63 @@ class turnitintooltwo_view {
                                         false, '', array("class" => "inbox_checkbox"));
         }
 
-        if ($turnitintooltwoassignment->turnitintooltwo->anon) {
-            if (empty($submission->submission_unanon) AND $parts[$partid]->dtpost > time() AND
-                                                    !empty($submission->submission_objectid)) {
-                // Anonymous marking is on, postdate has not passed and a submission has been made.
-                $studentname = html_writer::link('.unanonymise_form',
-                                        get_string('anonenabled', 'turnitintooltwo'),
-                                        array("class" => "unanonymise", "id" => "submission_".$submission->submission_objectid));
 
-            } else if (($parts[$partid]->dtpost <= time() OR !empty($submission->submission_unanon)) AND
-                    empty($submission->nmoodle)) {
-                // Post date has passed or anonymous marking disabled for user and user is a moodle user.
+        if( !$istutor ) {
+            // If students viewing it will show 'digital receipt' link
+            if ( !empty($submission->submission_objectid) ) {
                 $studentname = html_writer::link(
-                                $CFG->wwwroot."/user/view.php?id=".$submission->userid."&course="
-                                    .$turnitintooltwoassignment->turnitintooltwo->course,
-                                format_string($submission->lastname).", ".format_string($submission->firstname));
-            } else if (($parts[$partid]->dtpost <= time() OR
-                            !empty($submission->submission_unanon)) AND !empty($submission->nmoodle)) {
-                // Post date has passed or anonymous marking disabled for user and user is a NON moodle user.
-                $studentname = html_writer::tag("span",
-                                    format_string($submission->lastname).", ".format_string($submission->firstname)." (".
-                                            get_string('nonmoodleuser', 'turnitintooltwo').")",
-                                    array("class" => "italic"));
+                    $CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.$cm->id.'&do=digital_receipt&submissionid='.$submission->submission_objectid.'&view_context=box',
+                    $OUTPUT->pix_icon('receipt', get_string('digitalreceipt', 'turnitintooltwo'), 'mod_turnitintooltwo', array('id' => 'tii_digital_receipt_icon'))
+                    . get_string('viewdigitalreceipt', 'turnitintooltwo'), array('class' => 'tii_digital_receipt')
+                );
             } else {
-                // User has not made a submission.
-                $studentname = html_writer::tag("span", get_string('anonenabled', 'turnitintooltwo'), array("class" => "italic"));
+                $studentname = "--";
             }
         } else {
-            if (empty($submission->nmoodle)) {
-                
-                // If students viewing it will show 'digital receipt' link
-                if ( !empty($submission->submission_objectid) ) {
-                    $studentname = html_writer::link(
-                        $CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.$cm->id.'&do=digital_receipt&submissionid='.$submission->submission_objectid.'&view_context=box',
-                        $OUTPUT->pix_icon('receipt', get_string('digitalreceipt', 'turnitintooltwo'), 'mod_turnitintooltwo', array('id' => 'tii_digital_receipt_icon')) .
-                        ' ' . get_string('viewdigitalreceipt', 'turnitintooltwo'), array('class' => 'tii_digital_receipt')
-                    );
-                } else {
-                    $studentname = "--";
-                }
+            if ($turnitintooltwoassignment->turnitintooltwo->anon) {
+                if (empty($submission->submission_unanon) AND $parts[$partid]->dtpost > time() AND
+                                                        !empty($submission->submission_objectid)) {
+                    // Anonymous marking is on, postdate has not passed and a submission has been made.
+                    $studentname = html_writer::link('.unanonymise_form',
+                                            get_string('anonenabled', 'turnitintooltwo'),
+                                            array("class" => "unanonymise", "id" => "submission_".$submission->submission_objectid));
 
-                if( $istutor ) {
+                } else if (($parts[$partid]->dtpost <= time() OR !empty($submission->submission_unanon)) AND
+                        empty($submission->nmoodle)) {
+                    // Post date has passed or anonymous marking disabled for user and user is a moodle user.
+                    $studentname = html_writer::link(
+                                    $CFG->wwwroot."/user/view.php?id=".$submission->userid."&course="
+                                        .$turnitintooltwoassignment->turnitintooltwo->course,
+                                    format_string($submission->lastname).", ".format_string($submission->firstname));
+                } else if (($parts[$partid]->dtpost <= time() OR
+                                !empty($submission->submission_unanon)) AND !empty($submission->nmoodle)) {
+                    // Post date has passed or anonymous marking disabled for user and user is a NON moodle user.
+                    $studentname = html_writer::tag("span",
+                                        format_string($submission->lastname).", ".format_string($submission->firstname)." (".
+                                                get_string('nonmoodleuser', 'turnitintooltwo').")",
+                                        array("class" => "italic"));
+                } else {
+                    // User has not made a submission.
+                    $studentname = html_writer::tag("span", get_string('anonenabled', 'turnitintooltwo'), array("class" => "italic"));
+                }
+            } else {
+                if (empty($submission->nmoodle)) {
+                    // Link to user profile.
+                    $studentname = html_writer::link($CFG->wwwroot."/user/view.php?id=".$submission->userid."&course=".
+                                                $turnitintooltwoassignment->turnitintooltwo->course,
+                                                format_string($submission->lastname).", ".format_string($submission->firstname)); 
+                } else if (!empty($submission->nmoodle) && substr($submission->userid, 0, 3) != 'nm-') {
+                    // Moodle User not enrolled on this course as a student.
                     $studentname = html_writer::link($CFG->wwwroot."/user/view.php?id=".$submission->userid."&course=".
                                             $turnitintooltwoassignment->turnitintooltwo->course,
-                                            format_string($submission->lastname).", ".format_string($submission->firstname)); 
-                }
-                
-            } else if (!empty($submission->nmoodle) && substr($submission->userid, 0, 3) != 'nm-') {
-                // Moodle User not enrolled on this course as a student.
-                $studentname = html_writer::link($CFG->wwwroot."/user/view.php?id=".$submission->userid."&course=".
-                                        $turnitintooltwoassignment->turnitintooltwo->course,
-                                        format_string($submission->lastname).", ".format_string($submission->firstname)." (".
-                                            get_string('nonenrolledstudent', 'turnitintooltwo').")", array("class" => "italic"));
-            } else {
-                // Non Moodle user.
-                $studentname = html_writer::tag("span",
                                             format_string($submission->lastname).", ".format_string($submission->firstname)." (".
-                                                get_string('nonmoodleuser', 'turnitintooltwo').")", array("class" => "italic"));
+                                                get_string('nonenrolledstudent', 'turnitintooltwo').")", array("class" => "italic"));
+                } else {
+                    // Non Moodle user.
+                    $studentname = html_writer::tag("span",
+                                                format_string($submission->lastname).", ".format_string($submission->firstname)." (".
+                                                    get_string('nonmoodleuser', 'turnitintooltwo').")", array("class" => "italic"));
+                }
             }
         }
 
@@ -1126,14 +1126,17 @@ class turnitintooltwo_view {
             $score = '--';
         } else if (!empty($submission->id) && !empty($submission->submission_objectid) &&
                 ($istutor || $turnitintooltwoassignment->turnitintooltwo->studentreports)) {
-            $score = $OUTPUT->box_start('row_score origreport_open',
-                                        'origreport_'.$submission->submission_objectid.'_'.$partid.'_'.$moodleuserid);
+
             // Show score.
             if (is_null($submission->submission_score)) {
+                $score = $OUTPUT->box_start('row_score',
+                                        'origreport_'.$submission->submission_objectid.'_'.$partid.'_'.$moodleuserid);
                 $score .= $OUTPUT->box('&nbsp;', 'score_colour score_colour_');
                 $score .= $OUTPUT->box(get_string('pending', 'turnitintooltwo'), 'origreport_score');
                 $rawscore = null;
             } else {
+                $score = $OUTPUT->box_start('row_score origreport_open',
+                                        'origreport_'.$submission->submission_objectid.'_'.$partid.'_'.$moodleuserid);
                 // Put EN flag if translated matching is on and that is the score used.
                 $transmatch = ($submission->submission_transmatch == 1) ? 'EN' : '&nbsp;';
                 $score .= $OUTPUT->box($transmatch, 'score_colour score_colour_'.round($submission->submission_score, -1));
@@ -1264,7 +1267,7 @@ class turnitintooltwo_view {
                                             'mod_turnitintooltwo'),
                                         array("class" => "upload_box", "data-launch-eula" => $launcheula, "id" => "upload_".$submission->submission_objectid.
                                                             "_".$partid."_".$submission->userid));
-            
+
             if (time() > $parts[$partid]->dtdue && $turnitintooltwoassignment->turnitintooltwo->allowlate == 0 && !$istutor) {
                 $upload = "&nbsp;";
             }

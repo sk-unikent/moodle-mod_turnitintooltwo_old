@@ -102,15 +102,33 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configtext('turnitintooltwo/accountid',
                                                     get_string("turnitinaccountid", "turnitintooltwo"),
-                                                    get_string("turnitinaccountid_desc", "turnitintooltwo").$offlinecomment.$testconnection, ''));
+                                                    get_string("turnitinaccountid_desc", "turnitintooltwo"), ''));
 
     $settings->add(new admin_setting_configpasswordunmask('turnitintooltwo/secretkey',
                                                         get_string("turnitinsecretkey", "turnitintooltwo"),
                                                         get_string("turnitinsecretkey_desc", "turnitintooltwo"), ''));
 
-    $settings->add(new admin_setting_configtext('turnitintooltwo/apiurl',
+    $testoptions = array(
+        'https://api.turnitin.com' => 'https://api.turnitin.com',
+        'https://submit.ac.uk' => 'https://submit.ac.uk',
+        'https://sandbox.turnitin.com' => 'https://sandbox.turnitin.com'
+    );
+
+    // Add to moodle config.php file
+    //
+    // $CFG->turnitinqa = true;
+    // $CFG->turnitinqaurls = array(
+    //     'https://sprint.turnitin.com'
+    // );
+    if (!empty($CFG->turnitinqa)) {
+        foreach ($CFG->turnitinqaurls as $url) {
+            $testoptions[$url] = $url;
+        }
+    }
+
+    $settings->add(new admin_setting_configselect('turnitintooltwo/apiurl',
                                                     get_string("turnitinapiurl", "turnitintooltwo"),
-                                                    get_string("turnitinapiurl_desc", "turnitintooltwo"), ''));
+                                                    get_string("turnitinapiurl_desc", "turnitintooltwo").$offlinecomment.$testconnection, 0, $testoptions));
 
     $ynoptions = array(0 => get_string('no'), 1 => get_string('yes'));
 
@@ -170,8 +188,8 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading('turnitintooltwo_privacy', get_string('studentdataprivacy', 'turnitintooltwo'),
                        get_string('studentdataprivacy_desc', 'turnitintooltwo')));
 
-    if ($DB->count_records('turnitintooltwo_users') > 0 AND isset($onfig->enablepseudo)) {
-        $selectionarray = ($onfig->enablepseudo == 1) ? array(1 => get_string('yes')) : array(0 => get_string('no'));
+    if ($DB->count_records('turnitintooltwo_users') > 0 AND isset($config->enablepseudo)) {
+        $selectionarray = ($config->enablepseudo == 1) ? array(1 => get_string('yes')) : array(0 => get_string('no'));
         $pseudoselect = new admin_setting_configselect('turnitintooltwo/enablepseudo',
                                                         get_string('enablepseudo', 'turnitintooltwo'),
                                                         get_string('enablepseudo_desc', 'turnitintooltwo'),
@@ -282,6 +300,10 @@ if ($ADMIN->fulltree) {
 
     $suboptions = array( 0 => get_string('norepository', 'turnitintooltwo'), 
                         1 => get_string('standardrepository', 'turnitintooltwo'));
+
+    if (!isset($config->repositoryoption)) {
+        $config->repositoryoption = 0;
+    }
 
     switch ($config->repositoryoption) {
         case 0; // Standard options

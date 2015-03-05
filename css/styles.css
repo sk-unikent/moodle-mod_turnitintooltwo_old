@@ -3,6 +3,12 @@
     Created on : 19-Nov-2012, 14:58:41
     Author     : John McGettrick
 */
+
+.ccheckbox {
+    text-align: center;
+    padding: 8px 10px 2px !important;
+}
+
 .tii_digital_receipt {
     display: inline-block;
     width: 150px;
@@ -28,6 +34,7 @@
 
 #tii_digital_receipt_icon {
     margin-top: -3px;
+    margin-right: 5px;
 }
 
 .mod_turnitintooltwo .submit_nothing img {
@@ -228,6 +235,10 @@
 
 .mod_turnitintooltwo .submissionsDataTable {
     width:100%;
+}
+
+.mod_turnitintooltwo .submissionsDataTable a {
+    text-decoration: none;
 }
 
 .mod_turnitintooltwo .score_colour {
@@ -660,7 +671,6 @@ h3.main {
 }
 
 #page-admin-setting-modsettingturnitintooltwo #test_link, #page-admin-setting-modsettingturnitintooltwo #testing_container {
-    float:left;
     margin-bottom:8px;
 }
 
@@ -670,9 +680,9 @@ h3.main {
 }
 
 #page-admin-setting-modsettingturnitintooltwo #test_result {
-    float:left;
     margin: 4px 0 0;
-    padding:2px 6px;
+    padding: 5px 10px;
+    width: 300px;
 }
 
 #page-admin-setting-modsettingturnitintooltwo .test_link_success {
