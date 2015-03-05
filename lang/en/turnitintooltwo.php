@@ -3,6 +3,16 @@
 // Date: 2015-02-09
 // Language: en
 
+$string['viewdigitalreceipt'] = 'View Digital Receipt';
+$string['submissiondate'] = 'Submission Date';
+$string['receiptassignmenttitle'] = 'Assignment Title';
+$string['refid'] = 'Ref ID';
+$string['turnitinpaperid'] = 'Turnitin Paper ID';
+$string['submissionauthor'] = 'Submission Author';
+$string['print'] = 'Print';
+$string['digitalreceipt'] = 'Digital Receipt';
+$string['receiptparagraph'] = 'This receipt ackowledges that Turnitin received your paper. Below you will find the receipt information regarding your submission.';
+$string['objectid'] = 'Turnitin Paper ID';
 $string['uniquepartname'] = 'Part name must be unique';
 $string['closebutton'] = 'Close';
 $string['addsubmission'] = 'Add Submission';
@@ -67,7 +77,6 @@ $string['nosubmissions'] = 'No submissions have been made';
 $string['notavailableyet'] = 'Not available';
 $string['numberofparts'] = 'Number of Parts';
 $string['numberofparts_help'] = 'Allows for the creation of a multi part assignment, individual users may submit one piece of work to each part.';
-$string['objectid'] = 'Paper ID';
 $string['overallgrade'] = 'Overall Grade';
 $string['overallgrade_help'] = 'The overall grade determines the maximum allowed grade for the overall assignment, each part of an assignment has a maximum mark allocated which is used to proportionally distribute the grades in order to determine the overall grade.';
 $string['partdberror'] = 'There was a problem entering Part {$a} into the database<br />';
@@ -92,7 +101,6 @@ $string['proxyurl_desc'] = '<b>[Optional]</b><br />If your server uses a Proxy t
 $string['proxyuser'] = 'Proxy Username';
 $string['proxyuser_desc'] = '<b>[Optional]</b><br />If your proxy requires Authentication enter the username here.';
 $string['reportgenspeed'] = 'Report Generation Speed';
-$string['reportgenspeed_help'] = 'There are three options for this assignment setting: &#34;&#39;.$string[&#39;genimmediately1&#39;].&#39;&#34;, &#34;&#39;.$string[&#39;genimmediately2&#39;].&#39;&#34;, and &#34;&#39;.$string[&#39;genduedate&#39;].&#39;&#34;.<br /><br />The option &#34;&#39;.$string[&#39;genimmediately1&#39;].&#39;&#34; generates the Originality Report immediately when a student makes a submission. With this option selected your students will not be able to resubmit to the assignment.<br /><br />To allow resubmissions, select &#34;&#39;.$string[&#39;genimmediately2&#39;].&#39;&#34; option. This allows students to continuously resubmit papers to the assignment until the due date. It may take up to 24 hours to process Originality Reports for resubmissions.<br /><br />The option &#34;&#39;.$string[&#39;genduedate&#39;].&#39;&#34; will only generate an Originality Report on the assignment\&#39;s due date. This setting will make it so all papers submitted to the assignment will be compared against each other when the Originality Reports are created.';
 $string['resubmission'] = 'Resubmission';
 $string['resubmissiongradewarn'] = 'Resubmissions are allowed for this assignment until the due date passes. Any and all marks will be deleted when or if the paper is resubmitted. Would you like to continue?';
 $string['resubmissiongradewarnaware'] = 'Please be aware that if this resubmission is made, any and all marks will be deleted.';
@@ -368,8 +376,6 @@ $string['defaultassignmenttiititle'] = 'Assignment from Turnitin';
 $string['revealdesc'] = 'Please give a reason below for unmasking a students name.';
 $string['noreason'] = 'No reason specified';
 $string['unanonymiseerror'] = 'There was an error when attempting to reveal the name of a student';
-$string['digitalreceipt'] = 'Digital receipt';
-$string['viewdigitalreceipt'] = 'View digital receipt';
 $string['noscript'] = 'Turnitin requires Javascript but your browser does not have it enabled. Please enable Javascript in your browser to enable you to use the full functionality of Turnitin.';
 $string['noscriptsummary'] = 'Turnitin requires Javascript but your browser does not have it enabled. You will not be able to access Turnitin without it enabled.';
 $string['noscriptula'] = '(As you do not have javascript enabled you will have to manually refresh this page before you can make a submission after accepting the Turnitin User Agreement)';
@@ -487,3 +493,4 @@ $string['upgradenotavailable'] = 'No Upgrade Available';
 $string['turnitintoolofflineerror'] = 'We are experiencing a temporary problem. Please try again shortly.';
 $string['offlinestatus'] = 'Turnitin has been set to offline. (The variable $CFG->tiioffline has been set to true.)';
 $string['disableanonconfirm'] = 'Doing this will permanently disable anonymous marking on this assignment. Are you sure?';
+$string['reportgenspeed_help'] = 'There are three options for this assignment setting: &#39;Generate reports immediately (resubmissions are not allowed)&#39;, &#39;Generate reports immediately (resubmissions are allowed until due date)&#39;, and &#39;Generate reports on due date (resubmissions are allowed until due date)&#39;<br /><br />The option &#39;Generate reports immediately (resubmissions are not allowed)&#39; generates the Originality Report immediately when a student makes a submission. With this option selected your students will not be able to resubmit to the assignment.<br /><br />To allow resubmissions, select &#39;Generate reports immediately (resubmissions are allowed until due date)&#39; option. This allows students to continuously resubmit papers to the assignment until the due date. It may take up to 24 hours to process Originality Reports for resubmissions.<br /><br />The option &#39;Generate reports on due date (resubmissions are allowed until due date)&#39; will only generate an Originality Report on the assignment&#39;s due date. This setting will make it so all papers submitted to the assignment will be compared against each other when the Originality Reports are created.';
