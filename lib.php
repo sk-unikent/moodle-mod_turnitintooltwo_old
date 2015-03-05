@@ -1038,7 +1038,7 @@ function turnitintooltwo_getfiles($moduleid) {
             $assignment = html_writer::tag("span", get_string('assigngeterror', 'turnitintooltwo'),
                                             array("class" => "italic bold"));
         } else {
-            $assignment = html_writer::link($CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.$file->cmid.'&do=submissions',
+            $assignment = html_writer::link($CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.$file->cmid,
                                     $file->coursetitle . ' (' . $file->courseshort . ') - ' . $file->activity);
         }
 
@@ -1074,6 +1074,41 @@ function turnitintooltwo_getfiles($moduleid) {
     }
 
     return $return;
+}
+
+/**
+ * Serves submitted files.
+ *
+ * @param mixed $course course or id of the course
+ * @param mixed $cm course module or id of the course module
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options additional options affecting the file serving
+ * @return bool false if file not found, does not return if found - just send the file
+ */
+function turnitintooltwo_pluginfile($course, 
+                $cm,
+                context $context,
+                $filearea,
+                $args,
+                $forcedownload,
+                array $options=array()) {
+    global $CFG;
+
+    $itemid = (int)array_shift($args);
+    $relativepath = implode('/', $args);
+    $fullpath = "/{$context->id}/mod_turnitintooltwo/$filearea/$itemid/$relativepath";
+
+    $fs = get_file_storage();
+    $relativepath = implode('/', $args);
+
+    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+        return false;
+    }
+
+    send_stored_file($file, 0, 0, $forcedownload, $options);
 }
 
 /**
@@ -1429,4 +1464,22 @@ function turnitintooltwo_show_edit_course_end_date_form() {
     $optionsform = new turnitintooltwo_form('', $customdata);
 
     return html_writer::tag('div', $output.$optionsform->display(), array('class' => 'edit_course_end_date_form'));
+}
+
+/**
+ * Moodle participation report hooks for views with Moodle 2.6-
+ *
+ * @return array Array of available log labels
+ */
+function turnitintooltwo_get_view_actions() {
+    return array('view');
+}
+
+/**
+ * Moodle participation report hooks for views with Moodle 2.6-
+ *
+ * @return array Array of available log labels
+ */
+function turnitintooltwo_get_post_actions() {
+    return array('submit');
 }
