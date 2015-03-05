@@ -19,9 +19,9 @@
  * @copyright 2012 iParadigms LLC
  */
 
-require_once("../../config.php");
-require_once("lib.php");
-require_once("turnitintooltwo_view.class.php");
+require_once(__DIR__."/../../config.php");
+require_once(__DIR__."/lib.php");
+require_once(__DIR__."/turnitintooltwo_view.class.php");
 
 require_login();
 $action = required_param('action', PARAM_ALPHAEXT);
@@ -81,6 +81,25 @@ switch ($action) {
                     }
 
                     $fieldvalue = strtotime($fieldvalue.' '.$usertimezone);
+                    if ($fieldname == "dtpost" &&
+                        $turnitintooltwoassignment->turnitintooltwo->anon &&
+                        $turnitintooltwoassignment->turnitintooltwo->submitted == 1 &&
+                        $fieldvalue < time()) 
+                    {
+                        // Get the Turnitin course id
+                        $turnitin_cid = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course)->turnitin_cid;
+
+                        // Disable anonymous marking in Turnitin
+                        $assignment = new TiiAssignment();
+                        $assignment->setClassId($turnitin_cid);
+                        $assignment->setAnonymousMarking(0);
+
+                        // Update it in Moodle
+                        $anon_assignment = new stdClass();
+                        $anon_assignment->id = required_param('assignment', PARAM_INT);
+                        $anon_assignment->anon = 0;
+                        $DB->update_record('turnitintooltwo', $anon_assignment);
+                    }
                     break;
             }
 
@@ -653,24 +672,27 @@ switch ($action) {
         }
         $data = array("connection_status" => "fail", "msg" => get_string('connecttestcommerror', 'turnitintooltwo'));
 
-        $config = turnitintooltwo_admin_config();
-        if ((int)$config->accountid != 0 && !empty($config->apiurl) && !empty($config->secretkey)) {
-            if (is_siteadmin()) {
-                // Initialise API connection.
-                $turnitincomms = new turnitintooltwo_comms();
-                $istestingconnection = true; // Provided by Androgogic to override offline mode for testing connection.
-                $tiiapi = $turnitincomms->initialise_api($istestingconnection);
+        if (is_siteadmin()) {
+            // Initialise API connection.
 
-                $class = new TiiClass();
-                $class->setTitle('Test finding a class to see if connection works');
+            $account_id = required_param('account_id', PARAM_RAW);
+            $account_shared = required_param('account_shared', PARAM_RAW);
+            $url = required_param('url', PARAM_RAW);
 
-                try {
-                    $response = $tiiapi->findClasses($class);
-                    $data["connection_status"] = "success";
-                    $data["msg"] = get_string('connecttestsuccess', 'turnitintooltwo');
-                } catch (Exception $e) {
-                    $turnitincomms->handle_exceptions($e, 'connecttesterror', false);
-                }
+            $turnitincomms = new turnitintooltwo_comms($account_id, $account_shared, $url);
+
+            $istestingconnection = true; // Provided by Androgogic to override offline mode for testing connection.
+            $tiiapi = $turnitincomms->initialise_api($istestingconnection);
+
+            $class = new TiiClass();
+            $class->setTitle('Test finding a class to see if connection works');
+
+            try {
+                $response = $tiiapi->findClasses($class);
+                $data["connection_status"] = "success";
+                $data["msg"] = get_string('connecttestsuccess', 'turnitintooltwo');
+            } catch (Exception $e) {
+                $turnitincomms->handle_exceptions($e, 'connecttesterror', false);
             }
         }
         echo json_encode($data);

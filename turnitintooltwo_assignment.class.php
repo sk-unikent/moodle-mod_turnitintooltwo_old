@@ -19,9 +19,9 @@
  * @copyright 2012 iParadigms LLC *
  */
 
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_comms.class.php');
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_user.class.php');
-require_once($CFG->dirroot . '/mod/turnitintooltwo/turnitintooltwo_submission.class.php');
+require_once(__DIR__.'/turnitintooltwo_comms.class.php');
+require_once(__DIR__.'/turnitintooltwo_user.class.php');
+require_once(__DIR__.'/turnitintooltwo_submission.class.php');
 
 class turnitintooltwo_assignment {
 
@@ -868,7 +868,7 @@ class turnitintooltwo_assignment {
         }
 
         // Define grade settings.
-        @include_once($CFG->dirroot . "/lib/gradelib.php");
+        @include_once($CFG->libdir . "/gradelib.php");
         $params = array('deleted' => 1);
         grade_update('mod/turnitintooltwo', $turnitintooltwo->course, 'mod', 'turnitintooltwo', $id, 0, null, $params);
 
@@ -1086,7 +1086,6 @@ class turnitintooltwo_assignment {
                         }
 
                         $setmethod = "setFeedbackReleaseDate";
-
                         break;
                 }
                 $assignment->$setmethod(gmdate("Y-m-d\TH:i:s\Z", $fieldvalue));
@@ -1143,9 +1142,10 @@ class turnitintooltwo_assignment {
      *
      * @global type $USER
      * @global type $DB
+     * @param boolean $createevent - setting to determine whether to create a calendar event.
      * @return boolean
      */
-    public function edit_moodle_assignment() {
+    public function edit_moodle_assignment($createevent = true) {
         global $USER, $DB, $CFG;
 
         $config = turnitintooltwo_admin_config();
@@ -1306,7 +1306,7 @@ class turnitintooltwo_assignment {
                 // Delete existing events for this assignment part.
                 $eventname = $turnitintooltwonow->name." - ".$partnow->partname;
                 $DB->delete_records_select('event', " modulename = 'turnitintooltwo' AND instance = ? AND name = ? ",
-                                            array($this->id, $eventname));
+                                              array($this->id, $eventname));
             } else {
                 if (!$dbpart = $DB->insert_record('turnitintooltwo_parts', $part)) {
                     turnitintooltwo_print_error('partdberror', 'turnitintooltwo', null, $i, __FILE__, __LINE__);
@@ -1314,9 +1314,11 @@ class turnitintooltwo_assignment {
                 }
             }
 
-            require_once($CFG->dirroot.'/calendar/lib.php');
-            $event = new calendar_event($properties);
-            $event->update($properties, false);
+            if ($createevent == true) {
+                require_once($CFG->dirroot.'/calendar/lib.php');
+                $event = new calendar_event($properties);
+                $event->update($properties, false);
+            }
         }
 
         $this->turnitintooltwo->timemodified = time();
