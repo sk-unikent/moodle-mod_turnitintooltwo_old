@@ -934,13 +934,16 @@ class turnitintooltwo_assignment {
      * Get the assignment parts for this assignment
      *
      * @global type $DB
+     * @param bool $peermarks get peer mark assignments
      * @return array Returns the parts or empty array if no parts are found
      */
-    public function get_parts() {
+    public function get_parts($peermarks = true) {
         global $DB;
         if ($parts = $DB->get_records("turnitintooltwo_parts", array("turnitintooltwoid" => $this->turnitintooltwo->id))) {
-            foreach ($parts as $part) {
-                $parts[$part->id]->peermark_assignments = $this->get_peermark_assignments($part->tiiassignid);
+            if ($peermarks) {
+                foreach ($parts as $part) {
+                    $parts[$part->id]->peermark_assignments = $this->get_peermark_assignments($part->tiiassignid);
+                }
             }
             return $parts;
         } else {
@@ -1052,52 +1055,41 @@ class turnitintooltwo_assignment {
                 break;
 
             case "dtstart":
-            case "dtdue":
-            case "dtpost":
-                switch ($fieldname) {
-                    case "dtstart":
-                        if ($fieldvalue <= strtotime('1 year ago')) {
-                            $return['success'] = false;
-                            $return['msg'] = get_string('startdatenotyearago', 'turnitintooltwo');
-                        } else if ($fieldvalue >= $partdetails->dtdue) {
-                            $return['success'] = false;
-                            $return['msg'] = get_string('partdueerror', 'turnitintooltwo');
-                        } else if ($fieldvalue > $partdetails->dtpost) {
-                            $return['success'] = false;
-                            $return['msg'] = get_string('partposterror', 'turnitintooltwo');
-                        }
-
-                        $setmethod = "setStartDate";
-                        break;
-
-                    case "dtdue":
-                        if ($fieldvalue <= $partdetails->dtstart) {
-                            $return['success'] = false;
-                            $return['msg'] = get_string('partdueerror', 'turnitintooltwo');
-                        }
-
-                        $setmethod = "setDueDate";
-                        break;
-
-                    case "dtpost":
-                        if ($fieldvalue < $partdetails->dtstart) {
-                            $return['success'] = false;
-                            $return['msg'] = get_string('partposterror', 'turnitintooltwo');
-                        }
-
-                        // Disable anonymous marking in Moodle if the post date has passed.
-                        if ($this->turnitintooltwo->anon && $this->turnitintooltwo->submitted == 1 
-                            && $partdetails->unanon == 0 && $fieldvalue < time()) {
-                            $unanonymisedpart = new stdClass();
-                            $unanonymisedpart->id = $partid;
-                            $unanonymisedpart->unanon = 1;
-                            $DB->update_record('turnitintooltwo_parts', $unanonymisedpart);
-                        }
-
-                        $setmethod = "setFeedbackReleaseDate";
-                        break;
+                if ($fieldvalue <= strtotime('1 year ago')) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('startdatenotyearago', 'turnitintooltwo');
+                } else if ($fieldvalue >= $partdetails->dtdue) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('partdueerror', 'turnitintooltwo');
+                } else if ($fieldvalue > $partdetails->dtpost) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('partposterror', 'turnitintooltwo');
                 }
-                $assignment->$setmethod(gmdate("Y-m-d\TH:i:s\Z", $fieldvalue));
+
+                $assignment->setStartDate(gmdate("Y-m-d\TH:i:s\Z", $fieldvalue));
+                break;
+
+            case "dtdue":
+                if ($fieldvalue <= $partdetails->dtstart) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('partdueerror', 'turnitintooltwo');
+                }
+
+                $assignment->setDueDate(gmdate("Y-m-d\TH:i:s\Z", $fieldvalue));
+                break;
+
+            case "dtpost":
+                if ($fieldvalue < $partdetails->dtstart) {
+                    $return['success'] = false;
+                    $return['msg'] = get_string('partposterror', 'turnitintooltwo');
+                }
+
+                // Disable anonymous marking in Moodle if the post date has passed.
+                if ($this->turnitintooltwo->anon && $partdetails->submitted == 1 && $fieldvalue < time()) {
+                    $partdetails->unanon = 1;
+                }
+
+                $assignment->setFeedbackReleaseDate(gmdate("Y-m-d\TH:i:s\Z", $fieldvalue));
                 break;
         }
 
@@ -1258,9 +1250,21 @@ class turnitintooltwo_assignment {
             $attribute = "partname".$i;
             $assignment->setTitle($this->turnitintooltwo->name." ".$this->turnitintooltwo->$attribute." (Moodle TT)");
 
+            // Initialise part.
+            $part = new stdClass();
+            $part->turnitintooltwoid = $this->id;
+            $part->partname = $this->turnitintooltwo->$attribute;
+            $part->deleted = 0;
+            $part->maxmarks = $assignment->getMaxGrade();
+            $part->dtstart = strtotime($assignment->getStartDate());
+            $part->dtdue = strtotime($assignment->getDueDate());
+            $part->dtpost = strtotime($assignment->getFeedbackReleaseDate());
+
             $parttiiassignid = 0;
             if ($i <= count($partids) && !empty($partids[$i - 1])) {
                 $partdetails = $this->get_part_details($partids[$i - 1]);
+                $part->submitted = $partdetails->submitted;
+                $part->unanon = $partdetails->unanon;
                 // Set anonymous marking depending on whether part has been unanonymised.
                 if ($config->useanon && $partdetails->unanon != 1) {
                     $assignment->setAnonymousMarking($this->turnitintooltwo->anon);
@@ -1273,20 +1277,13 @@ class turnitintooltwo_assignment {
                 $this->edit_tii_assignment($assignment);
             } else {
                 $parttiiassignid = $this->create_tii_assignment($assignment, $this->id, $i);
+                $part->submitted = 0;
             }
 
-            $part = new stdClass();
-            $part->tiiassignid = $parttiiassignid;
-            $part->turnitintooltwoid = $this->id;
-            $part->partname = $this->turnitintooltwo->$attribute;
-            $part->deleted = 0;
-            $part->maxmarks = $assignment->getMaxGrade();
-            $part->dtstart = strtotime($assignment->getStartDate());
-            $part->dtdue = strtotime($assignment->getDueDate());
-            $part->dtpost = strtotime($assignment->getFeedbackReleaseDate());
+            $part->tiiassignid = $parttiiassignid;            
 
             // Unanonymise part if necessary.
-            if ($part->dtpost < time() && $turnitintooltwonow->submitted == 1) {
+            if ($part->dtpost < time() && $part->submitted == 1) {
                 $part->unanon = 1;
             }
 
@@ -1542,8 +1539,6 @@ class turnitintooltwo_assignment {
                 $part->dtpost = strtotime($readassignment->getFeedbackReleaseDate());
                 $part->maxmarks = $readassignment->getMaxGrade();
                 $part->tiiassignid = $readassignment->getAssignmentId();
-                $anonymous = (int)$readassignment->getAnonymousMarking();
-                $part->unanon = ($this->turnitintooltwo->anon && $anonymous == 0) ? 1 : 0;
 
                 if ($assignmentids == 0) {
                     $part->id = $partids[$readassignment->getAssignmentId()];
