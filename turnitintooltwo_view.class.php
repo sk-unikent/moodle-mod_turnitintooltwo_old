@@ -234,7 +234,7 @@ class turnitintooltwo_view {
     public function show_notice($notice) {
         global $OUTPUT;
 
-        return $OUTPUT->box($notice["message"], 'generalbox', $notice["type"]);
+        return $OUTPUT->box($notice["message"], 'generalbox noticebox', $notice["type"]);
     }
 
     public function show_digital_receipt($digitalreceipt) {
@@ -486,7 +486,7 @@ class turnitintooltwo_view {
         // Do the table headers.
         $cells = array();
         $cells["part"] = new html_table_cell('part');
-        $cells["checkbox"] = new html_table_cell( ($istutor) ? html_writer::checkbox(false, false, false, '', array("id" => "select_all_checkbox", "class" => "inbox_checkbox")) : '&nbsp;' );
+        $cells["checkbox"] = new html_table_cell( ($istutor) ? html_writer::checkbox(false, false, false, '', array("class" => "select_all_checkbox")) : '&nbsp;' );
         $cells["student"] = ($istutor) ? new html_table_cell(get_string('student', 'turnitintooltwo')) : new html_table_cell();
         $cells["student"]->attributes['class'] = 'left';
         $cells["title"] = new html_table_cell(get_string('submissiontitle', 'turnitintooltwo'));
@@ -539,8 +539,8 @@ class turnitintooltwo_view {
                 $i++;
 
                 $tabitems[$i] = html_writer::link("#tabs-".$partid, $partobject->partname);
-                $tables .= html_writer::tag('h2', $partobject->partname, array('class' => 'js_hide'));
-                $tables .= $OUTPUT->box_start('part_table', 'tabs-'.$partid);
+                $tables .= html_writer::tag('h2', $partobject->partname, array('class' => 'js_hide', 'data-submitted' => $partobject->submitted));
+                $tables .= $OUTPUT->box_start('part_table', 'tabs-'.$partid, array('data-submitted' => $partobject->submitted));
 
                 $exportorigfileszip = "";
                 $exportgrademarkzip = "";
@@ -564,7 +564,7 @@ class turnitintooltwo_view {
                 }
 
                 // Include download links and info table.
-                $tables .= $OUTPUT->box($exportorigfileszip.$exportgrademarkzip, '', 'zip_downloads');
+                $tables .= $OUTPUT->box($exportorigfileszip.$exportgrademarkzip, 'zip_downloads', 'part_' . $partobject->id);
                 $tables .= $this->get_submission_inbox_part_details($cm, $turnitintooltwoassignment, $partdetails, $partid);
 
                 // Construct submissions table.
@@ -623,13 +623,19 @@ class turnitintooltwo_view {
                 }
 
                 // Link to refresh submissions with latest data from Turnitin.
-                $refreshlink = html_writer::tag('div', $OUTPUT->pix_icon('refresh',
-                                                get_string('turnitinrefreshsubmissions', 'turnitintooltwo'),
-                                                        'mod_turnitintooltwo')." ".
+                $refreshlink = html_writer::tag('div', html_writer::tag('i', '', array('class' => 'fa fa-refresh fa-lg',
+                                                    'title' => get_string('turnitinrefreshingsubmissions', 'turnitintooltwo')))." ".
                                                     get_string('turnitinrefreshsubmissions', 'turnitintooltwo'),
                                                         array('class' => 'refresh_link', 'id' => 'refresh_'.$partid));
 
-                $output .= $OUTPUT->box($messagesinbox.$refreshlink, '', 'tii_table_functions');
+                // Link which appears during the refresh of submissions.
+                $refreshinglink = html_writer::tag('div', html_writer::tag('i', '', array('class' => 'fa fa-spinner fa-spin fa-lg',
+                                                    'title' => get_string('turnitinrefreshingsubmissions', 'turnitintooltwo')))." ".
+                                                    get_string('turnitinrefreshingsubmissions', 'turnitintooltwo'),
+                                                        array('class' => 'refreshing_link', 'id' => 'refreshing_'.$partid));
+
+                //Output the links.
+                $output .= $OUTPUT->box($messagesinbox.$refreshlink.$refreshinglink, '', 'tii_table_functions');
             }
         }
 
@@ -735,7 +741,8 @@ class turnitintooltwo_view {
         if ($istutor) {
             $datefield = html_writer::link('#', $datefield,
                                             array('data-anon' => $turnitintooltwoassignment->turnitintooltwo->anon,
-                                                'data-submitted' => $turnitintooltwoassignment->turnitintooltwo->submitted,
+                                                'data-unanon' => $partdetails[$partid]->unanon,
+                                                'data-submitted' => $partdetails[$partid]->submitted,
                                                 'class' => 'editable_postdue editable_date editable_date_'.$partid,
                                                 'data-pk' => $partid, 'data-name' => 'dtpost', 'id' => 'date_post_'.$partid,
                                                 'data-params' => "{ 'assignment': ".
@@ -1028,7 +1035,6 @@ class turnitintooltwo_view {
                                         false, '', array("class" => "inbox_checkbox"));
         }
 
-
         if( !$istutor ) {
             // If students viewing it will show 'digital receipt' link
             if ( !empty($submission->submission_objectid) ) {
@@ -1040,8 +1046,16 @@ class turnitintooltwo_view {
             } else {
                 $studentname = "--";
             }
+
+            //Determine whether the student can see the overall grade, based on the post time of all parts.
+            $display_overall_grade = 1;
+            foreach (array_keys($parts) as $ar_key => $ar_value) {
+                if ($parts[$ar_value]->dtpost > time()) {
+                    $display_overall_grade = 0;
+                }
+            }
         } else {
-            if ($turnitintooltwoassignment->turnitintooltwo->anon) {
+            if ($turnitintooltwoassignment->turnitintooltwo->anon && $parts[$partid]->unanon != 1) {
                 if (empty($submission->submission_unanon) AND $parts[$partid]->dtpost > time() AND
                                                         !empty($submission->submission_objectid)) {
                     // Anonymous marking is on, postdate has not passed and a submission has been made.
@@ -1091,7 +1105,7 @@ class turnitintooltwo_view {
         //submission title
         if ( !empty($submission->submission_objectid) AND !empty($submission->submission_objectid) ) {
             $title = $OUTPUT->box_start('default_open', 'default_'.$submission->submission_objectid.'_'.$partid.'_'.$moodleuserid);
-            $title .= $OUTPUT->box(format_string($submission->submission_title));
+            $title .= $OUTPUT->box(format_string($submission->submission_title), 'submission_title');
             $title .= $OUTPUT->box($CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.$cm->id, 'dv_url', 'default_url_'.$submission->submission_objectid);
             $title .= $OUTPUT->box_end(true);
         } else {
@@ -1204,8 +1218,8 @@ class turnitintooltwo_view {
                     }
 
                     if ($turnitintooltwoassignment->turnitintooltwo->grade == 0 ||
-                                                    $useroverallgrades[$submission->userid] === '--') {
-                        $overallgrade = '--';
+                                                    $useroverallgrades[$submission->userid] === '--' || 
+                                                    (!$istutor && $display_overall_grade == 0)) {
                     } else if ($turnitintooltwoassignment->turnitintooltwo->grade < 0) { // Scale.
                         $scale = $DB->get_record('scale', array('id' => $turnitintooltwoassignment->turnitintooltwo->grade * -1));
                         $scalearray = explode(",", $scale->scale);

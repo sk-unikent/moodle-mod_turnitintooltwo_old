@@ -76,7 +76,7 @@ if ($id) {
 }
 
 // If opening DV then $viewcontext needs to be set to box
-$viewcontext = ($do == "origreport" || $do == "grademark") ? "box" : $viewcontext;
+$viewcontext = ($do == "origreport" || $do == "grademark" || $do == "default") ? "box" : $viewcontext;
 
 require_login($course->id);
 turnitintooltwo_activitylog('view.php?id='.$id.'&do='.$do, "REQUEST");
@@ -227,23 +227,33 @@ if (!empty($action)) {
                         // Upload file.
                         $doupload = $turnitintooltwosubmission->do_file_upload($cm, $turnitintooltwofileuploadoptions);
                         if (!$doupload["result"]) {
-                            $turnitintooltwosubmission->delete_submission();
+                            if (!$prevsubmission) {
+                                $turnitintooltwosubmission->delete_submission();
+                            }
                             $_SESSION["notice"]["message"] = $doupload["message"];
+                            $_SESSION["notice"]["type"] = "error";
                             $do = "submitpaper";
                         }
                     } else if ($post['submissiontype'] == 2) {
                         $turnitintooltwosubmission->prepare_text_submission($cm, $post);
                     }
                     if ($do == "submission_success") {
-                        if ($digitalreceipt = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment)) {
-                            $_SESSION["digital_receipt"] = $digitalreceipt;
+                        $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment);
+                        $_SESSION["digital_receipt"] = $tiisubmission;
+
+                        if ($tiisubmission['success'] == true) {
+                            $locked_assignment = new stdClass();
+                            $locked_assignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
+                            $locked_assignment->submitted = 1;
+                            $DB->update_record('turnitintooltwo', $locked_assignment);
+
+                            $locked_part = new stdClass();
+                            $locked_part->id = $post['submissionpart'];
+                            $locked_part->submitted = 1;
+                            $DB->update_record('turnitintooltwo_parts', $locked_part);
+                        } else {
+                            $do = "submission_failure";
                         }
-
-                        $locked_assignment = new stdClass();
-                        $locked_assignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
-                        $locked_assignment->submitted = 1;
-                        $DB->update_record('turnitintooltwo', $locked_assignment);
-
                         $extraparams = array();
                         unset($_SESSION['form_data']);
                     }
@@ -290,6 +300,9 @@ if (!empty($action)) {
 
 // Show header and navigation
 if ($viewcontext == "box" || $viewcontext == "box_solid") {
+
+    $PAGE->set_pagelayout('embedded');
+
     $turnitintooltwoview->output_header($cm,
             $course,
             $url,
@@ -361,6 +374,19 @@ switch ($do) {
             $digitalreceipt = html_writer::tag("div", $digitalreceipt, array("id" => "box_receipt"));
         }
         echo $digitalreceipt;
+        unset($_SESSION["digital_receipt"]);
+        break;
+
+    case "submission_failure":
+
+        $output = $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
+                                                    'mod_turnitintooltwo'), 'centered_div');
+
+        $output .= html_writer::tag("div", $_SESSION["digital_receipt"]["message"], array("class" => "general_warning"));
+        if ($viewcontext == "box_solid") {
+            $output = html_writer::tag("div", $output, array("class" => "submission_failure_msg"));
+        }
+        echo $output;
         unset($_SESSION["digital_receipt"]);
         break;
 
