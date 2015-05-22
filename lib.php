@@ -1228,6 +1228,7 @@ function turnitintooltwo_print_overview($courses, &$htmlarray) {
         return;
     }
 
+    $submissioncount = array();
     foreach ($turnitintooltwos as $key => $turnitintooltwo) {
         $turnitintooltwoassignment = new turnitintooltwo_assignment($turnitintooltwo->id, $turnitintooltwo);
         $parts = $turnitintooltwoassignment->get_parts(false);
@@ -1244,8 +1245,7 @@ function turnitintooltwo_print_overview($courses, &$htmlarray) {
                             array($turnitintooltwo->id), '', 'id, submission_part, submission_grade, submission_gmimaged');
             foreach ($submissionsquery as $submission) {
                 if(!isset($submissioncount[$submission->submission_part])) {
-                    $submissioncount[$submission->submission_part]['graded'] = 0;
-                    $submissioncount[$submission->submission_part]['submitted'] = 0;
+                    $submissioncount[$submission->submission_part] = array('graded' => 0, 'submitted' => 0);
                 }
                 if ($submission->submission_grade != 'NULL' and $submission->submission_gmimaged == 1) {
                     $submissioncount[$submission->submission_part]['graded']++;
@@ -1253,7 +1253,12 @@ function turnitintooltwo_print_overview($courses, &$htmlarray) {
                 $submissioncount[$submission->submission_part]['submitted']++;
             }
         }
+
         foreach ($parts as $part) {
+
+            if(!isset($submissioncount[$part->id])) {
+                $submissioncount[$part->id] = array('graded' => 0, 'submitted' => 0);
+            }
 
             $partsarray[$part->id]['name'] = $part->partname;
             $partsarray[$part->id]['dtdue'] = $part->dtdue;

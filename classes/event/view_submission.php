@@ -19,9 +19,7 @@ class view_submission extends \core\event\base {
     }
 
     public function get_url() {
-        return new \moodle_url('/mod/turnitintooltwo/view.php', array(
-            'id' => $this->objectid
-        ));
+        return new \moodle_url('/mod/turnitintooltwo/view.php', array( 'id' => $this->objectid));
     }
 
     /**
@@ -32,7 +30,6 @@ class view_submission extends \core\event\base {
      */
     protected function validate_data() {
         parent::validate_data();
-
         if (!isset($this->other['desc'])) {
             throw new \coding_exception('The \'desc\' value must be set in other.');
         }
