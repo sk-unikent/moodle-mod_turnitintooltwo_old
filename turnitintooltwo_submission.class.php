@@ -286,6 +286,8 @@ class turnitintooltwo_submission {
         $cm = get_coursemodule_from_instance("turnitintooltwo", $turnitintooltwoassignment->turnitintooltwo->id,
             $turnitintooltwoassignment->turnitintooltwo->course);
 
+        $istutor = has_capability('mod/turnitintooltwo:grade', context_module::instance($cm->id));
+
         turnitintooltwo_add_to_log($turnitintooltwoassignment->turnitintooltwo->course, "delete submission", 'view.php?id='.$cm->id, get_string('deletesubmissiondesc', 'turnitintooltwo') . " '$this->submission_title'", $cm->id, $this->userid);
 
         // Delete Moodle submission first.
@@ -321,7 +323,7 @@ class turnitintooltwo_submission {
                         'turnitintooltwo', $turnitintooltwoassignment->turnitintooltwo->id, 0, $grades, $params);
 
         // If we have a Turnitin Id then delete submission.
-        if (!empty($this->submission_objectid)) {
+        if ((!empty($this->submission_objectid)) && ($istutor)) {
             $submission = new TiiSubmission();
             $submission->setSubmissionId($this->submission_objectid);
 
@@ -362,6 +364,7 @@ class turnitintooltwo_submission {
         $course = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
         $user = new turnitintooltwo_user($userid, 'Learner');
         $user->join_user_to_class($course->turnitin_cid);
+        $user->edit_tii_user();
 
         $part = $turnitintooltwoassignment->get_part_details($partid);
 
@@ -415,6 +418,9 @@ class turnitintooltwo_submission {
                 $this->receipt->send_message($userid, $message);
             }
 
+            //Add entry to log.
+            turnitintooltwo_add_to_log($turnitintooltwoassignment->turnitintooltwo->course, "add submission", 'view.php?id='.$cm->id, get_string('gradenosubmission', 'turnitintooltwo') . ": $userid", $cm->id, $userid);
+
             if (!$this->id = $DB->insert_record('turnitintooltwo_submissions', $submission)) {
                 return get_string('submissionupdateerror', 'turnitintooltwo');
             } else {
@@ -448,13 +454,14 @@ class turnitintooltwo_submission {
     public function do_tii_submission($cm, $turnitintooltwoassignment) {
         global $DB, $USER, $CFG;
 
-        $notice = array();
+        $notice = array("success" => false);
         $context = context_module::instance($cm->id);
 
         // Check if user is a member of class, if not then join them to it.
         $course = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
         $user = new turnitintooltwo_user($this->userid, 'Learner');
         $user->join_user_to_class($course->turnitin_cid);
+        $user->edit_tii_user();
 
         // Get the stored file and read it into a temp file for submitting to Turnitin.
         $fs = get_file_storage();
@@ -573,13 +580,17 @@ class turnitintooltwo_submission {
                     );
 
                     $message = $this->receipt->build_message($input);
-                    
+
                     $this->receipt->send_message(
                         $this->userid,
                         $message
                     );
                 }
 
+                //Create a log entry for a resubmission.
+                if ($apimethod == "replaceSubmission") {
+                    turnitintooltwo_add_to_log($turnitintooltwoassignment->turnitintooltwo->course, "add submission", 'view.php?id='.$cm->id, get_string('addsubmissiondesc', 'turnitintooltwo') . " '" . $this->submission_title . "' (" . get_string('resubmission', 'turnitintooltwo') . ")", $cm->id, $user->id);
+                }
             } catch (Exception $e) {
                 if (!is_null($this->submission_objectid)) {
                     $errorstring = "updatesubmissionerror";
@@ -683,6 +694,7 @@ class turnitintooltwo_submission {
         if ($save) {
             // If the user is not a moodle user then get their name from Tii - only do this on initial save.
             $sub->userid = turnitintooltwo_user::get_moodle_user_id($tiisubmissiondata->getAuthorUserId());
+
             if ($sub->userid == 0 && empty($this->id)) {
                 if ($tiisubmissiondata->getAuthorUserId() > 0) {
                     $sub->submission_nmuserid = $tiisubmissiondata->getAuthorUserId();
