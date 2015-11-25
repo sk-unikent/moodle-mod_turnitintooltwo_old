@@ -855,8 +855,15 @@ class LTI extends OAuthSimple {
     private function transportData( $params ) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL,            $this->endpoint );
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_TIMEOUT,        600);
+
+        if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_TIMEOUT,        600);
+        } else {
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 1500);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS,        3000);
+        }
+
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true );
         curl_setopt($ch, CURLOPT_POST,           true );
         curl_setopt($ch, CURLOPT_POSTFIELDS,     $params);
