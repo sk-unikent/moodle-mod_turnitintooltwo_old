@@ -304,8 +304,8 @@ class Soap extends SoapClient {
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
             curl_setopt($ch, CURLOPT_TIMEOUT,        120);
         } else {
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 1200);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS,        2300);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 1000);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS,        1500);
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true );

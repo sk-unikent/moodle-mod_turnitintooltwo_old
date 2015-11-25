@@ -255,6 +255,7 @@ if (!empty($action)) {
                         $do = "submitpaper";
                     }
                 } else {
+                    $submission = null;
                     foreach ($prevsubmission as $prev) {
                         $submission = $prev;
                     }
@@ -279,6 +280,32 @@ if (!empty($action)) {
                     }
 
                     if ($do == "submission_success") {
+                        // Kent - New method.
+                        $task = new \mod_turnitintooltwo\task\submit_assignment();
+                        $task->set_custom_data(array(
+                            'userid' => $USER->id,
+                            'tiiid' => $turnitintooltwoassignment->turnitintooltwo->id,
+                            'submissionid' => $turnitintooltwosubmission->id,
+                            'submissionpart' => $post['submissionpart']
+                        ));
+                        \core\task\manager::queue_adhoc_task($task);
+
+                        turnitintooltwo_add_to_log(
+                            $turnitintooltwoassignment->turnitintooltwo->course,
+                            "queue submission",
+                            'view.php?id='.$cm->id,
+                            get_string('addsubmissiondesc', 'turnitintooltwo') . " '" . $post['submissiontitle'] . "'",
+                            $cm->id, $post['studentsname']
+                        );
+
+                        redirect(new moodle_url('/mod/turnitintooltwo/view.php', array(
+                            'id' => $id,
+                            'do' => 'submission_queued',
+                            'view_context' => $viewcontext
+                        )));
+                        exit;
+                        // Kent - New method.
+
                         // Log successful submission to Moodle.
                         turnitintooltwo_add_to_log(
                             $turnitintooltwoassignment->turnitintooltwo->course,
@@ -293,21 +320,21 @@ if (!empty($action)) {
                         $_SESSION["digital_receipt"]["is_manual"] = 0;
 
                         if ($tiisubmission['success'] == true) {
-                            $locked_assignment = new stdClass();
-                            $locked_assignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
-                            $locked_assignment->submitted = 1;
-                            $DB->update_record('turnitintooltwo', $locked_assignment);
+                            $lockedassignment = new stdClass();
+                            $lockedassignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
+                            $lockedassignment->submitted = 1;
+                            $DB->update_record('turnitintooltwo', $lockedassignment);
 
-                            $locked_part = new stdClass();
-                            $locked_part->id = $post['submissionpart'];
-                            $locked_part->submitted = 1;
+                            $lockedpart = new stdClass();
+                            $lockedpart->id = $post['submissionpart'];
+                            $lockedpart->submitted = 1;
 
-                            //Disable anonymous marking if post date has passed.
+                            // Disable anonymous marking if post date has passed.
                             if ($parts[$post['submissionpart']]->dtpost <= time()) {
-                                $locked_part->unanon = 1;
+                                $lockedpart->unanon = 1;
                             }
 
-                            $DB->update_record('turnitintooltwo_parts', $locked_part);
+                            $DB->update_record('turnitintooltwo_parts', $lockedpart);
                         } else {
                             $do = "submission_failure";
                         }
@@ -477,6 +504,14 @@ echo html_writer::start_tag("div", array("class" => $class));
 echo html_writer::tag("div", $viewcontext, array("id" => "view_context"));
 
 switch ($do) {
+    // Kent.
+    case "submission_queued":
+        echo $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
+                                                    'mod_turnitintooltwo'), 'centered_div');
+        echo $OUTPUT->notification('Your submission has been queued. You will receive an email when the submission has gone through.', 'notifysuccess');
+        break;
+    // Kent.
+
     case "submission_success":
         $digitalreceipt = $turnitintooltwoview->show_digital_receipt($_SESSION["digital_receipt"]);
         if ($viewcontext == "box_solid") {
