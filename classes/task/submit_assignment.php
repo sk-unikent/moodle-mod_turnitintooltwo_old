@@ -96,14 +96,14 @@ class submit_assignment extends \core\task\adhoc_task
      * TODO - send message?
      */
     private function send_message($message, $error = false) {
-        mtrace("MESSAGE: " . $message);
+        //mtrace("MESSAGE: " . $message);
     }
 
     /**
      * TODO - send message?
      */
     private function send_digital_receipt($digitalreciept) {
-        mtrace("digitalreciept: ");
-        print_r($digitalreciept);
+        //mtrace("digitalreciept: ");
+        //print_r($digitalreciept);
     }
 }
