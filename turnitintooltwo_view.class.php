@@ -1153,10 +1153,20 @@ class turnitintooltwo_view {
         // Show date of submission or link to submit if it didn't work.
         if (empty($submission->submission_objectid) AND !empty($submission->id)) {
             $rawmodified = 1;
+
             $modified = html_writer::link($CFG->wwwroot."/mod/turnitintooltwo/view.php?id=".$cm->id."&action=manualsubmission".
                                             "&sub=".$submission->id.'&sesskey='.sesskey(),
                                                 $OUTPUT->pix_icon('icon-sml', get_string('submittoturnitin', 'turnitintooltwo'),
                                                     'mod_turnitintooltwo')." ".get_string('submittoturnitin', 'turnitintooltwo'));
+
+            // Kent - might be processing?
+            foreach ($DB->get_records('task_adhoc', array('component' => 'mod_turnitintooltwo')) as $record) {
+                $json = json_decode($record->customdata);
+                if (isset($json->submissionid) && $json->submissionid == $submission->id) {
+                    $modified = html_writer::tag('span', 'Processing...');
+                }
+            }
+            // Kent.
 
         } else if (empty($submission->submission_objectid)) {
             $rawmodified = 0;

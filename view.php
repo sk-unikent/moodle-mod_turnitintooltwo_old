@@ -286,7 +286,8 @@ if (!empty($action)) {
                             'userid' => $USER->id,
                             'tiiid' => $turnitintooltwoassignment->turnitintooltwo->id,
                             'submissionid' => $turnitintooltwosubmission->id,
-                            'submissionpart' => $post['submissionpart']
+                            'submissionpart' => $post['submissionpart'],
+                            'subtime' => time()
                         ));
                         \core\task\manager::queue_adhoc_task($task);
 
@@ -507,8 +508,8 @@ switch ($do) {
     // Kent.
     case "submission_queued":
         echo $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
-                                                    'mod_turnitintooltwo'), 'centered_div');
-        echo $OUTPUT->notification('Your submission has been queued. You will receive an email when the submission has gone through.', 'notifysuccess');
+                                                    'mod_turnitintooltwo'), 'centered_div', null, array('style' => 'padding: 10px;'));
+        echo $OUTPUT->notification('Your submission has been uploaded, you will receive an email once it has been processed.', 'notifysuccess');
         break;
     // Kent.
 
