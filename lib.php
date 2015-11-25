@@ -695,47 +695,8 @@ function turnitintooltwo_tempfile(array $filename, $suffix) {
  * @param type $module
  * @return null
  */
-function turnitintooltwo_updateavailable($current_version) {
-    global $CFG;
-
-    $updateneeded['update'] = 0;
-
-    try {
-        // Open connection.
-        $ch = curl_init();
-
-        // Set the url, number of POST vars, POST data.
-        curl_setopt($ch, CURLOPT_URL, "https://www.turnitin.com/static/resources/files/moodledirect2_latest.xml");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        if (isset($CFG->proxyhost) AND !empty($CFG->proxyhost)) {
-            curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost.':'.$CFG->proxyport);
-        }
-        if (isset($CFG->proxyuser) AND !empty($CFG->proxyuser)) {
-            curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-            curl_setopt($ch, CURLOPT_PROXYUSERPWD, sprintf('%s:%s', $CFG->proxyuser, $CFG->proxypassword));
-        }
-
-        // Execute post.
-        $result = curl_exec($ch);
-
-        // Close connection.
-        curl_close($ch);
-
-        $xml = simplexml_load_string($result);
-        if ((isset($xml)) AND (isset($xml->version))) {
-            if ($xml->version > $current_version) {
-                $updateneeded['update'] = 1;
-                $updateneeded['file'] = $xml->filename;
-            }
-        }
-
-    } catch (Exception $e) {
-        turnitintooltwo_comms::handle_exceptions($e, 'checkupdateavailableerror', false);
-    }
-
-    return $updateneeded;
+function turnitintooltwo_updateavailable($currentversion) {
+    return false;
 }
 
 /**
