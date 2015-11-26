@@ -509,7 +509,7 @@ switch ($do) {
     case "submission_queued":
         echo $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
                                                     'mod_turnitintooltwo'), 'centered_div', null, array('style' => 'padding: 10px;'));
-        echo $OUTPUT->notification('Your submission has been uploaded, you will receive an email once it has been processed.', 'notifysuccess');
+        echo $OUTPUT->notification('Your submission has been received and time-stamped. You will receive an email once it has been processed. You can now browse to a different webpage.', 'notifysuccess');
         break;
     // Kent.
 
