@@ -480,7 +480,7 @@ class turnitintooltwo_submission {
      * @param object $cm the course module object
      * @return string $message to display to user
      */
-    public function do_tii_submission($cm, $turnitintooltwoassignment, $submodified = null) {
+    public function do_tii_submission($cm, $turnitintooltwoassignment) {
         global $DB, $USER, $CFG;
 
         $notice = array("success" => false);
@@ -574,15 +574,7 @@ class turnitintooltwo_submission {
                 $submission->submission_status = $this->submission_status;
                 $submission->submission_queued = $this->submission_queued;
                 $submission->submission_attempts = $this->submission_attempts;
-
-                // Kent.
-                if (isset($submodified)) {
-                    $submission->submission_modified = $submodified;
-                } else {
-                    $submission->submission_modified = time();
-                }
-                // Kent.
-
+                $submission->submission_modified = time();
                 $submission->submission_nmuserid = $this->submission_nmuserid;
                 $submission->submission_nmfirstname = $this->submission_nmfirstname;
                 $submission->submission_nmlastname = $this->submission_nmlastname;

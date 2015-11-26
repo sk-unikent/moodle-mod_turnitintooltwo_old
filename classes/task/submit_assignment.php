@@ -51,7 +51,14 @@ class submit_assignment extends \core\task\adhoc_task
         $turnitintooltwosubmission = new \turnitintooltwo_submission($data['submissionid'], "moodle", $turnitintooltwoassignment);
         $parts = $turnitintooltwoassignment->get_parts();
 
-        $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment, $data['subtime']);
+        $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment);
+
+        // Update submission.
+        $DB->update_record('turnitintooltwo_submissions', array(
+            'id' => $data['submissionid'],
+            'submission_modified' => $data['subtime']
+        ));
+
         $this->send_digital_receipt($tiisubmission);
 
         if ($tiisubmission['success'] !== true) {
