@@ -41,6 +41,14 @@ class submit_assignment extends \core\task\adhoc_task
 
         $data = (array)$this->get_custom_data();
 
+        // Make sure we are still wanted.
+        $submission = $DB->get_record('turnitintooltwo_submissions', array(
+            'id' => $data['submissionid']
+        ));
+        if (!$submission) {
+            return true;
+        }
+
         $user = $DB->get_record('user', array('id' => $data['userid']));
         \core\session\manager::set_user($user);
 
