@@ -77,7 +77,7 @@ class submit_assignment extends \core\task\adhoc_task
         if ($tiisubmission['success'] !== true) {
             $DB->insert_record('turnitintooltwo_sub_status', array(
                 'submissionid' => $data['submissionid'],
-                'progress' => self::STATUS_FAILED,
+                'status' => self::STATUS_FAILED,
                 'receipt' => $digitalreceipt
             ));
 
@@ -86,7 +86,7 @@ class submit_assignment extends \core\task\adhoc_task
 
         $DB->insert_record('turnitintooltwo_sub_status', array(
             'submissionid' => $data['submissionid'],
-            'progress' => self::STATUS_SUCCESS,
+            'status' => self::STATUS_SUCCESS,
             'receipt' => $digitalreceipt
         ));
 

@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . "/mod/turnitintooltwo/turnitintooltwo_view.class.php");
 
 use external_api;
 use external_value;
@@ -94,10 +95,11 @@ class external extends external_api
 
         // Woo!
         if ($status->status == \mod_turnitintooltwo\task\submit_assignment::STATUS_SUCCESS) {
-            require_once(__DIR__ . "/../turnitintooltwo_view.class.php");
-            $turnitintooltwoview = new turnitintooltwo_view();
+            $turnitintooltwoview = new \turnitintooltwo_view();
 
             $digitalreceipt = $turnitintooltwoview->show_digital_receipt($digitalreceipt);
+            $digitalreceipt = \html_writer::tag("div", $digitalreceipt, array("id" => "box_receipt"));
+
             return array(
                 'status' => 'success',
                 'message' => $digitalreceipt
@@ -106,7 +108,7 @@ class external extends external_api
 
         return array(
             'status' => 'failed',
-            'message' => html_writer::tag("div", $digitalreceipt["message"], array("class" => "general_warning"))
+            'message' => \html_writer::tag("div", $digitalreceipt["message"], array("class" => "general_warning"))
         );
     }
 

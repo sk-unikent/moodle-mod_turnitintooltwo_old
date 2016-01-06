@@ -515,9 +515,9 @@ echo html_writer::tag("div", $viewcontext, array("id" => "view_context"));
 switch ($do) {
     // Kent.
     case "submission_queued":
+        echo $OUTPUT->box_start('generalbox', 'tiisubstatus');
         echo $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
                                                     'mod_turnitintooltwo'), 'centered_div', null, array('style' => 'padding: 10px;'));
-        echo $OUTPUT->box_start('generalbox', 'tiisubstatus');
         echo $OUTPUT->notification('<i class="fa fa-spin fa-spinner"></i> Submitting assignment to Turnitin (this can take up to 2 minutes)...', 'notifysuccess');
         echo $OUTPUT->box_end();
         break;
