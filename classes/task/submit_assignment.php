@@ -18,7 +18,7 @@
  * Turnitintwo adhoc tasks.
  *
  * @package    mod_turnitintooltwo
- * @copyright  2015 Skylar Kelty <S.Kelty@kent.ac.uk>
+ * @copyright  2016 Skylar Kelty <S.Kelty@kent.ac.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,6 +29,9 @@ namespace mod_turnitintooltwo\task;
  */
 class submit_assignment extends \core\task\adhoc_task
 {
+    const STATUS_SUCCESS = 1;
+    const STATUS_FAILED = 2;
+
     public function get_component() {
         return 'mod_turnitintooltwo';
     }
@@ -67,11 +70,25 @@ class submit_assignment extends \core\task\adhoc_task
             'submission_modified' => $data['subtime']
         ));
 
-        $this->send_digital_receipt($tiisubmission);
+        $digitalreceipt = $tiisubmission;
+        $digitalreceipt["is_manual"] = 0;
+        $digitalreceipt = json_encode($digitalreceipt);
 
         if ($tiisubmission['success'] !== true) {
+            $DB->insert_record('turnitintooltwo_sub_status', array(
+                'submissionid' => $data['submissionid'],
+                'progress' => self::STATUS_FAILED,
+                'receipt' => $digitalreceipt
+            ));
+
             return false;
         }
+
+        $DB->insert_record('turnitintooltwo_sub_status', array(
+            'submissionid' => $data['submissionid'],
+            'progress' => self::STATUS_SUCCESS,
+            'receipt' => $digitalreceipt
+        ));
 
         $lockedassignment = new \stdClass();
         $lockedassignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
@@ -105,20 +122,5 @@ class submit_assignment extends \core\task\adhoc_task
         }
 
         parent::set_custom_data($customdata);
-    }
-
-    /**
-     * TODO - send message?
-     */
-    private function send_message($message, $error = false) {
-        //mtrace("MESSAGE: " . $message);
-    }
-
-    /**
-     * TODO - send message?
-     */
-    private function send_digital_receipt($digitalreciept) {
-        //mtrace("digitalreciept: ");
-        //print_r($digitalreciept);
     }
 }

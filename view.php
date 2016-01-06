@@ -124,6 +124,13 @@ $url = new moodle_url('/mod/turnitintooltwo/view.php', $urlparams);
 // Load Javascript and CSS.
 $turnitintooltwoview->load_page_components();
 
+// Kent addition.
+if ($do == "submission_queued") {
+    $submissionid = required_param('submissionid', PARAM_INT);
+    $PAGE->requires->js_call_amd('mod_turnitintooltwo/submissionqueued', 'init', array($submissionid));
+}
+// End Kent.
+
 $turnitintooltwoassignment = new turnitintooltwo_assignment($turnitintooltwo->id, $turnitintooltwo);
 
 // Define file upload options.
@@ -302,6 +309,7 @@ if (!empty($action)) {
                         redirect(new moodle_url('/mod/turnitintooltwo/view.php', array(
                             'id' => $id,
                             'do' => 'submission_queued',
+                            'submissionid' => $turnitintooltwosubmission->id,
                             'view_context' => $viewcontext
                         )));
                         exit;
@@ -509,7 +517,9 @@ switch ($do) {
     case "submission_queued":
         echo $OUTPUT->box($OUTPUT->pix_icon('icon', get_string('turnitin', 'turnitintooltwo'),
                                                     'mod_turnitintooltwo'), 'centered_div', null, array('style' => 'padding: 10px;'));
-        echo $OUTPUT->notification('Your submission has been received and time-stamped. You will receive an email once it has been processed. You can now browse to a different webpage.', 'notifysuccess');
+        echo $OUTPUT->box_start('generalbox', 'tiisubstatus');
+        echo $OUTPUT->notification('<i class="fa fa-spin fa-spinner"></i> Submitting assignment to Turnitin (this can take up to 2 minutes)...', 'notifysuccess');
+        echo $OUTPUT->box_end();
         break;
     // Kent.
 
