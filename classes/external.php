@@ -77,8 +77,12 @@ class external extends external_api
             return array('status' => 'error');
         }
 
+        // Grab more data.
+        $turnitintooltwo = $DB->get_record('turnitintooltwo', array('id' => $submission->turnitintooltwoid));
+        list($course, $cm) = get_course_and_cm_from_instance($turnitintooltwo, 'turnitintooltwo');
+
         // Check this is our submission.
-        if ($USER->id !== $submission->userid) {
+        if ($USER->id !== $submission->userid || has_capability('mod/turnitintooltwo:grade', \context_module::instance($cm->id))) {
             return array('status' => 'nopermission');
         }
 
