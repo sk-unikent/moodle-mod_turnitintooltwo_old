@@ -82,7 +82,7 @@ class external extends external_api
         list($course, $cm) = get_course_and_cm_from_instance($turnitintooltwo, 'turnitintooltwo');
 
         // Check this is our submission.
-        if ($USER->id !== $submission->userid || has_capability('mod/turnitintooltwo:grade', \context_module::instance($cm->id))) {
+        if ($USER->id !== $submission->userid && !has_capability('mod/turnitintooltwo:grade', \context_module::instance($cm->id))) {
             return array('status' => 'nopermission');
         }
 
