@@ -112,7 +112,7 @@ class external extends external_api
 
         return array(
             'status' => 'failed',
-            'message' => \html_writer::tag("div", $digitalreceipt["message"], array("class" => "general_warning"))
+            'message' => \html_writer::tag("div", $digitalreceipt["message"], array("class" => "alert alert-danger"))
         );
     }
 
