@@ -295,6 +295,12 @@ if (!empty($action)) {
 
                     if ($do == "submission_success") {
                         // Kent - New method.
+                        
+                        // Delete any old status.
+                        $DB->delete_records('turnitintooltwo_sub_status', array(
+                            'submissionid' => $turnitintooltwosubmission->id
+                        ));
+
                         $task = new \mod_turnitintooltwo\task\submit_assignment();
                         $task->set_custom_data(array(
                             'userid' => $USER->id,
