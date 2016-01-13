@@ -2,21 +2,21 @@
 namespace mod_turnitintooltwo\event;
 
 /*
- * Log event when paper is queued for submission either by student or instructor on behalf of student
+ * Log event when paper fails to submit
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-class queue_submission extends \core\event\base {
+class errored_submission extends \core\event\base {
     protected function init() {
-        $this->data['crud'] = 'c'; // c(reate), r(ead), u(pdate), d(elete)
+        $this->data['crud'] = 'u'; // c(reate), r(ead), u(pdate), d(elete)
         $this->data['level'] = self::LEVEL_PARTICIPATING; // For 2.6, this appears to have been renamed to 'edulevel' in 2.7
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
         $this->data['objecttable'] = 'turnitintooltwo';
     }
 
     public static function get_name() {
-        return 'Submission queued';
+        return 'Submission error';
     }
 
     public function get_description() {

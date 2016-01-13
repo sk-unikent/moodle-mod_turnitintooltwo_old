@@ -46,7 +46,7 @@ $tiiintegrationids = array(0 => get_string('nointegration', 'turnitintooltwo'), 
  * @param string $desc Description of the logged event
  * @param int $cmid Course module id
  */
-function turnitintooltwo_add_to_log($courseid, $event_name, $link, $desc, $cmid, $userid = 0) {
+function turnitintooltwo_add_to_log($courseid, $event_name, $link, $desc, $cmid, $userid = 0, $other = array()) {
     global $CFG, $USER;
     if ( ( property_exists( $CFG, 'branch' ) AND ( $CFG->branch < 27 ) ) || ( !property_exists( $CFG, 'branch' ) ) ) {
         add_to_log($courseid, "turnitintooltwo", $event_name, $link, $desc, $cmid);
@@ -57,11 +57,12 @@ function turnitintooltwo_add_to_log($courseid, $event_name, $link, $desc, $cmid,
         $data = array(
             'objectid' => $cmid,
             'context' => ( $cmid == 0 ) ? context_course::instance($courseid) : context_module::instance($cmid),
-            'other' => array('desc' => $desc)
+            'other' => array_merge(array('desc' => $desc), $other)
         );
         if (!empty($userid) && ($userid != $USER->id)) {
             $data['relateduserid'] = $userid;
         }
+
         $event = $event_path::create($data);
         $event->trigger();
     }

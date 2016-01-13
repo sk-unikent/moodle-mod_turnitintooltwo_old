@@ -620,7 +620,10 @@ class turnitintooltwo_submission {
                     'view.php?id='.$cm->id,
                     get_string($logstring, 'turnitintooltwo') . " '" . $this->submission_title . "'",
                     $cm->id,
-                    $user->id
+                    $user->id,
+                    array(
+                        'submissionid' => $this->id
+                    )
                 );
             } catch (Exception $e) {
                 $errorstring = (!is_null($this->submission_objectid)) ? "updatesubmissionerror" : "createsubmissionerror";

@@ -52,63 +52,102 @@ class submit_assignment extends \core\task\adhoc_task
             return true;
         }
 
+        cli_writeln("Processing Turnitintooltwo submission: " . $data['submissionid']);
+
         $user = $DB->get_record('user', array('id' => $data['userid']));
         \core\session\manager::set_user($user);
 
         $turnitintooltwo = $DB->get_record('turnitintooltwo', array('id' => $data['tiiid']));
         list($course, $cm) = get_course_and_cm_from_instance($turnitintooltwo, 'turnitintooltwo');
 
-        $turnitintooltwoassignment = new \turnitintooltwo_assignment($turnitintooltwo->id, $turnitintooltwo);
-        $turnitintooltwosubmission = new \turnitintooltwo_submission($data['submissionid'], "moodle", $turnitintooltwoassignment);
-        $parts = $turnitintooltwoassignment->get_parts();
+        try {
+            $turnitintooltwoassignment = new \turnitintooltwo_assignment($turnitintooltwo->id, $turnitintooltwo);
+            $turnitintooltwosubmission = new \turnitintooltwo_submission($data['submissionid'], "moodle", $turnitintooltwoassignment);
+            $parts = $turnitintooltwoassignment->get_parts();
 
-        $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment);
+            $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment);
 
-        // Update submission.
-        $DB->update_record('turnitintooltwo_submissions', array(
-            'id' => $data['submissionid'],
-            'submission_modified' => $data['subtime']
-        ));
+            // Update submission.
+            $DB->update_record('turnitintooltwo_submissions', array(
+                'id' => $data['submissionid'],
+                'submission_modified' => $data['subtime']
+            ));
+        } catch (\Exception $e) {
+            $tiisubmission = array(
+                'success' => false,
+                'message' => $e->getMessage()
+            );
+
+            cli_writeln($e->getMessage());
+        }
 
         $digitalreceipt = $tiisubmission;
-        $digitalreceipt["is_manual"] = 0;
+        $digitalreceipt['is_manual'] = 0;
         $digitalreceipt = json_encode($digitalreceipt);
 
-        if ($tiisubmission['success'] !== true) {
-            $DB->insert_record('turnitintooltwo_sub_status', array(
-                'submissionid' => $data['submissionid'],
-                'status' => self::STATUS_FAILED,
-                'receipt' => $digitalreceipt
-            ));
+        $this->update_sub_status($data['submissionid'], $tiisubmission['success'], $digitalreceipt);
 
-            return false;
+        if ($tiisubmission['success'] === true) {
+            $lockedassignment = new \stdClass();
+            $lockedassignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
+            $lockedassignment->submitted = 1;
+            $DB->update_record('turnitintooltwo', $lockedassignment);
+
+            $lockedpart = new \stdClass();
+            $lockedpart->id = $data['submissionpart'];
+            $lockedpart->submitted = 1;
+
+            // Disable anonymous marking if post date has passed.
+            if ($parts[$data['submissionpart']]->dtpost <= time()) {
+                $lockedpart->unanon = 1;
+            }
+
+            $DB->update_record('turnitintooltwo_parts', $lockedpart);
+
+            cli_writeln("Finished processing successful submission: " . $data['submissionid']);
+        } else {
+            turnitintooltwo_add_to_log(
+                $course->id,
+                "errored submission",
+                'view.php?id='.$cm->id,
+                "Failed to submit '" . $turnitintooltwosubmission->submission_title . "'",
+                $cm->id,
+                $user->id,
+                array('submissionid' => $data['submissionid'])
+            );
+
+            cli_writeln("Finished processing unsuccessful submission: " . $data['submissionid']);
         }
-
-        $DB->insert_record('turnitintooltwo_sub_status', array(
-            'submissionid' => $data['submissionid'],
-            'status' => self::STATUS_SUCCESS,
-            'receipt' => $digitalreceipt
-        ));
-
-        $lockedassignment = new \stdClass();
-        $lockedassignment->id = $turnitintooltwoassignment->turnitintooltwo->id;
-        $lockedassignment->submitted = 1;
-        $DB->update_record('turnitintooltwo', $lockedassignment);
-
-        $lockedpart = new \stdClass();
-        $lockedpart->id = $data['submissionpart'];
-        $lockedpart->submitted = 1;
-
-        // Disable anonymous marking if post date has passed.
-        if ($parts[$data['submissionpart']]->dtpost <= time()) {
-            $lockedpart->unanon = 1;
-        }
-
-        $DB->update_record('turnitintooltwo_parts', $lockedpart);
 
         \core\session\manager::set_user(get_admin());
 
-        return true;
+        return $tiisubmission['success'];
+    }
+
+    /**
+     * Update sub status.
+     */
+    private function update_sub_status($submissionid, $status, $receipt) {
+        global $DB;
+
+        $status = $status === true ? self::STATUS_SUCCESS : self::STATUS_FAILED;
+
+        $record = $DB->get_record('turnitintooltwo_sub_status', array(
+            'submissionid' => $submissionid
+        ));
+
+        if ($record) {
+            $record->status = $status;
+            $record->receipt = $receipt;
+
+            return $DB->update_record('turnitintooltwo_sub_status', $record);
+        }
+
+        return $DB->insert_record('turnitintooltwo_sub_status', array(
+            'submissionid' => $submissionid,
+            'status' => $status,
+            'receipt' => $receipt
+        ));
     }
 
     /**

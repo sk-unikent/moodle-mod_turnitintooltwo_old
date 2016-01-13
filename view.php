@@ -316,7 +316,8 @@ if (!empty($action)) {
                             "queue submission",
                             'view.php?id='.$cm->id,
                             get_string('addsubmissiondesc', 'turnitintooltwo') . " '" . $post['submissiontitle'] . "'",
-                            $cm->id, $post['studentsname']
+                            $cm->id, $post['studentsname'],
+                            array('submissionid' => $turnitintooltwosubmission->id)
                         );
 
                         redirect(new moodle_url('/mod/turnitintooltwo/view.php', array(
