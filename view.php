@@ -91,7 +91,6 @@ if ($id) {
 $viewcontext = ($do == "origreport" || $do == "grademark" || $do == "default") ? "box" : $viewcontext;
 
 require_login($course->id, true, $cm);
-turnitintooltwo_activitylog('view.php?id='.$id.'&do='.$do, "REQUEST");
 
 //Check if the user has the capability to view the page - used when an assignment is set to hidden.
 $context = context_module::instance($cm->id);
@@ -527,6 +526,8 @@ $class = ($istutor) ? "js_required" : "";
 echo html_writer::start_tag("div", array("class" => $class));
 echo html_writer::tag("div", $viewcontext, array("id" => "view_context"));
 
+$course = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
+
 switch ($do) {
     // Kent.
     case "submission_queued":
@@ -843,4 +844,5 @@ foreach ($parts as $part) {
     $partsstring .= $part->partname.': '.$part->tiiassignid;
 }
 $partsstring .= ")";
-echo '<!-- Turnitin Moodle Direct Version: '.turnitintooltwo_get_version().' - '.$partsstring.' -->';
+$courseID = $course->turnitin_cid;
+echo '<!-- Turnitin Moodle Direct Version: '.turnitintooltwo_get_version().' - course ID: '.$courseID.' - '.$partsstring.' -->';
