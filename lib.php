@@ -56,6 +56,7 @@ function turnitintooltwo_add_to_log($courseid, $event_name, $link, $desc, $cmid,
 
         $data = array(
             'objectid' => $cmid,
+            'courseid' => $courseid,
             'context' => ( $cmid == 0 ) ? context_course::instance($courseid) : context_module::instance($cmid),
             'other' => array_merge(array('desc' => $desc), $other)
         );

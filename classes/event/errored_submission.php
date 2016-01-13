@@ -35,6 +35,7 @@ class errored_submission extends \core\event\base {
      */
     protected function validate_data() {
         parent::validate_data();
+
         if (!isset($this->other['desc'])) {
             throw new \coding_exception('The \'desc\' value must be set in other.');
         }

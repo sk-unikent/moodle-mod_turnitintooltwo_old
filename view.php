@@ -314,7 +314,7 @@ if (!empty($action)) {
                             $turnitintooltwoassignment->turnitintooltwo->course,
                             "queue submission",
                             'view.php?id='.$cm->id,
-                            get_string('addsubmissiondesc', 'turnitintooltwo') . " '" . $post['submissiontitle'] . "'",
+                            "Queued turnitin submission: " . " '" . $post['submissiontitle'] . "'",
                             $cm->id, $post['studentsname'],
                             array('submissionid' => $turnitintooltwosubmission->id)
                         );
