@@ -640,7 +640,7 @@ class turnitintooltwo_submission {
                 $errorstring = (!is_null($this->submission_objectid)) ? "updatesubmissionerror" : "createsubmissionerror";
                 $error = $turnitincomms->handle_exceptions($e, $errorstring, false, true);
 
-                $notice["message"] = $error;
+                $notice["message"] = get_string($errorstring, 'turnitintooltwo');
                 $notice["success"] = false;
             }
         } else {
