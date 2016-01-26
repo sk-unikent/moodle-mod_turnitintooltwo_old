@@ -110,7 +110,7 @@ function xmldb_turnitintooltwo_upgrade($oldversion) {
         }
     }
 
-    if ($oldversion < 2015040107) {
+    if ($oldversion < 2016011102) {
         $table = new xmldb_table('turnitintooltwo');
         // Add field for institution check.
         $field = new xmldb_field('institution_check', XMLDB_TYPE_INTEGER, '1', false, false, null, null, 'journalcheck');
