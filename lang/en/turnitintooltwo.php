@@ -3,6 +3,7 @@
 // Date: 2015-04-01
 // Language: en
 
+$string['search:activity'] = 'Turnitintooltwo activities';
 $string['addsubmission'] = 'Add Submission';
 $string['allowlate'] = 'Allow Submissions after the Due Date';
 $string['allsubmissions'] = 'Submission Inbox';
