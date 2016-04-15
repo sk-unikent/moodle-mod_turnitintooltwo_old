@@ -295,7 +295,7 @@ if (!empty($action)) {
 
                     if ($do == "submission_success") {
                         // Kent - New method.
-                        
+
                         // Delete any old status.
                         $DB->delete_records('turnitintooltwo_sub_status', array(
                             'submissionid' => $turnitintooltwosubmission->id
@@ -309,7 +309,7 @@ if (!empty($action)) {
                             'submissionpart' => $post['submissionpart'],
                             'subtime' => time()
                         ));
-                        \core\task\manager::queue_adhoc_task($task, null, 10);
+                        \core\task\manager::queue_adhoc_task($task, 10);
 
                         turnitintooltwo_add_to_log(
                             $turnitintooltwoassignment->turnitintooltwo->course,
