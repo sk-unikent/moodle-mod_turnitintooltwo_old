@@ -39,11 +39,7 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                 return;
             }
 
-            if (data.status == 'error' || data.status == 'nopermission') {
-                $("#tiisubstatus").html("We could not get the status for this submission, please wait 5 minutes and try again.");
-            } else {
-                $("#tiisubstatus").html(data.message);
-            }
+            $("#tiisubstatus").html(data.message);
 
             window.clearInterval(timer);
         });

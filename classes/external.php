@@ -63,7 +63,7 @@ class external extends external_api
      * @throws \invalid_parameter_exception
      */
     public static function get_submission_status($submissionid) {
-        global $DB, $USER;
+        global $DB, $USER, $PAGE;
 
         $params = self::validate_parameters(self::get_submission_status_parameters(), array(
             'submissionid' => $submissionid
@@ -74,7 +74,7 @@ class external extends external_api
             'id' => $submissionid
         ));
         if (!$submission) {
-            return array('status' => 'error');
+            return array('status' => 'error', 'message' => 'Could not find submission.');
         }
 
         // Grab more data.
@@ -83,7 +83,7 @@ class external extends external_api
 
         // Check this is our submission.
         if ($USER->id !== $submission->userid && !has_capability('mod/turnitintooltwo:grade', \context_module::instance($cm->id))) {
-            return array('status' => 'nopermission');
+            return array('status' => 'nopermission', 'message' => 'You do not have permission to view that.');
         }
 
         // What is the status?
@@ -91,7 +91,7 @@ class external extends external_api
             'submissionid' => $submissionid
         ));
         if (!$status) {
-            return array('status' => 'queued');
+            return array('status' => 'queued', 'message' => '');
         }
 
         // Decode the receipt.
@@ -101,6 +101,7 @@ class external extends external_api
         if ($status->status == \mod_turnitintooltwo\task\submit_assignment::STATUS_SUCCESS) {
             $turnitintooltwoview = new \turnitintooltwo_view();
 
+            $PAGE->set_context(\context_module::instance($cm->id));
             $digitalreceipt = $turnitintooltwoview->show_digital_receipt($digitalreceipt);
             $digitalreceipt = \html_writer::tag("div", $digitalreceipt, array("id" => "box_receipt"));
 
@@ -122,12 +123,10 @@ class external extends external_api
      * @return external_description
      */
     public static function get_submission_status_returns() {
-        return new external_multiple_structure(
-            new external_single_structure(
-                array(
-                    'status' => new external_value(PARAM_ALPHA, 'status codes'),
-                    'receipt' => new external_value(PARAM_RAW, 'digital receipt')
-                )
+        return new external_single_structure(
+            array(
+                'status' => new external_value(PARAM_TEXT, 'status codes'),
+                'message' => new external_value(PARAM_RAW, 'digital receipt')
             )
         );
     }
