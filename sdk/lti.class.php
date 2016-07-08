@@ -939,8 +939,8 @@ class LTI extends OAuthSimple {
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
             curl_setopt($ch, CURLOPT_TIMEOUT,        600);
         } else {
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 1500);
-            curl_setopt($ch, CURLOPT_TIMEOUT_MS,        3000);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 5500);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS,        6000);
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true );
