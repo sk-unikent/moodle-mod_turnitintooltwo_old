@@ -770,6 +770,12 @@ class turnitintooltwo_submission {
             // Create our submission hash to prevent duplication.
             $sub->submission_hash = $sub->userid.'_'.$sub->turnitintooltwoid.'_'.$sub->submission_part;
 
+            // See if this hash exists.
+            $record = $DB->get_record("turnitintooltwo_submissions", array('submission_hash' => $sub->submission_hash), 'id');
+            if ($record) {
+                $this->id = $record->id;
+            }
+
             // If we have no user ID get it from the Moodle database by using their Turnitin e-mail address.
             if ($sub->userid == 0) {
                 $tmpuser = new turnitintooltwo_user(0);
