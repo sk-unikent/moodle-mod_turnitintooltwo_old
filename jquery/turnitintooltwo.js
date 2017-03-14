@@ -190,7 +190,7 @@ jQuery(document).ready(function($) {
     // Configure datatables language settings.
     if (typeof M.str.turnitintooltwo !== 'undefined') {
         var dataTablesLang = {
-            "sProcessing": M.str.turnitintooltwo.sprocessing,
+            "sProcessing": '<span class="loading-message">' + M.str.turnitintooltwo.sprocessing + '</span>',
             "sZeroRecords": M.str.turnitintooltwo.szerorecords,
             "sInfo": M.str.turnitintooltwo.sinfo,
             "sSearch": M.str.turnitintooltwo.ssearch,
@@ -396,6 +396,26 @@ jQuery(document).ready(function($) {
         }
         return false;
     });
+
+    // Sync all grades link in settings page.
+    if ($('#turnitin_sync_all_grades').length > 0) {
+        $('.turnitin_sync_grades').click(function() {
+
+            $('.turnitin_sync_grades').hide();
+            $('.turnitin_syncing_grades').show();
+
+            $.ajax({
+                type: "POST",
+                url: M.cfg.wwwroot + "/mod/turnitintooltwo/ajax.php",
+                dataType: "json",
+                data: {action: "sync_all_submissions", assignment: $('#turnitin_sync_all_grades').data('turnitintooltwoid'), sesskey: M.cfg.sesskey},
+                success: function(data) {
+                    $('.turnitin_sync_grades').show();
+                    $('.turnitin_syncing_grades').hide();
+                }
+            });
+        });
+    }
 
     // Resize window if submission has failed.
     if ($('.submission_failure_msg').length > 0) {
@@ -900,7 +920,7 @@ jQuery(document).ready(function($) {
     function resetPeermarkSection(part_id) {
         $('#tabs-' + part_id + ' .toggle_peermarks').hide();
         $('#tabs-' + part_id + ' .peermark_count').html('');
-        $('#tabs-' + part_id + ' .peermark_loading').show();
+        $('#tabs-' + part_id + ' .peermark-loading').show();
         $('#tabs-' + part_id + ' .peermark_assignments_container').hide();
     }
 
@@ -923,7 +943,7 @@ jQuery(document).ready(function($) {
                     eval(data);
                     $('#tabs-' + part_id + ' .peermark_assignments_container').html(data.peermark_table);
 
-                    $('#tabs-' + part_id + ' .peermark_loading').hide();
+                    $('#tabs-' + part_id + ' .peermark-loading').hide();
                     $('#tabs-' + part_id + ' .peermark_count').html(data.no_of_peermarks);
 
                     if (data.no_of_peermarks > 0) {
