@@ -74,11 +74,11 @@ class TurnitinAPI {
         $this->testingconnection = false;
         $this->performancelog = null;
 
-        $this->personwsdl = dirname(__FILE__).'/wsdl/lis-person.wsdl';
-        $this->coursesectionwsdl = dirname(__FILE__).'/wsdl/lis-coursesection.wsdl';
-        $this->lineitemwsdl = dirname(__FILE__).'/wsdl/lis-lineitem.wsdl';
-        $this->membershipwsdl = dirname(__FILE__).'/wsdl/lis-membership.wsdl';
-        $this->resultwsdl = dirname(__FILE__).'/wsdl/lis-result.wsdl';
+        $this->personwsdl = __DIR__.'/wsdl/lis-person.wsdl';
+        $this->coursesectionwsdl = __DIR__.'/wsdl/lis-coursesection.wsdl';
+        $this->lineitemwsdl = __DIR__.'/wsdl/lis-lineitem.wsdl';
+        $this->membershipwsdl = __DIR__.'/wsdl/lis-membership.wsdl';
+        $this->resultwsdl = __DIR__.'/wsdl/lis-result.wsdl';
     }
 
     /**
