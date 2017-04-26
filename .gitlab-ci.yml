@@ -14,7 +14,7 @@ stages:
     - checks
 
 before_script:
-    - export MOODLE_BRANCH=MOODLE_31_STABLE
+    - export MOODLE_BRANCH=master
     - export DB=mysqli
     - export PLUGIN=`pwd`
     - cd ../..
