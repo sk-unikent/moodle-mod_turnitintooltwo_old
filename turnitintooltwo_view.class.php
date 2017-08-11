@@ -21,6 +21,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__."/lib.php");
 require_once(__DIR__.'/turnitintooltwo_form.class.php');
 
 class turnitintooltwo_view {
@@ -113,11 +114,10 @@ class turnitintooltwo_view {
      * Output the Menu in the settings area as an HTML list
      *
      * @global type $CFG
-     * @param obj $module
      * @return output the menu as an HTML list
      */
-    public function draw_settings_menu($module, $cmd) {
-        global $CFG, $OUTPUT;
+    public function draw_settings_menu($cmd) {
+        global $CFG, $OUTPUT, $DB;
 
         $tabs = array();
 
@@ -138,6 +138,25 @@ class turnitintooltwo_view {
 
         $tabs[] = new tabobject('files', $CFG->wwwroot.'/mod/turnitintooltwo/settings_extras.php?cmd=files',
                         get_string('files', 'turnitintooltwo'), get_string('files', 'turnitintooltwo'), false);
+
+        // Include Moodle v1 migration tab if v1 is installed AND the migration tool has been activated.
+        // Note - the enabled status is evaluated in a roundabout way rather than a direct query because
+        // if one uses the same method as for module, with an extra line in $migration_enabled_params for 
+        // 'value' then one encounters an error "Comparisons of text column conditions are not allowed."
+        $module = $DB->get_record('config_plugins', array('plugin' => 'mod_turnitintool'));
+        $enabled = false;
+        $migration_enabled_params = array(
+            'plugin' => 'turnitintooltwo',
+            'name' => 'migration_enabled'
+        );
+        $enabled_raw = $DB->get_record('config_plugins', $migration_enabled_params);
+        if ($enabled_raw && $enabled_raw->value == 1) {
+            $enabled = true;
+        }
+        if ( $module && $enabled ) {
+            $tabs[] = new tabobject('v1migration', $CFG->wwwroot.'/mod/turnitintooltwo/settings_extras.php?cmd=v1migration',
+                        get_string('v1migrationtitle', 'turnitintooltwo'), get_string('v1migrationtitle', 'turnitintooltwo'), false);    
+        }
 
         $tabs[] = new tabobject('courses', $CFG->wwwroot.'/mod/turnitintooltwo/settings_extras.php?cmd=courses',
                         get_string('restorationheader', 'turnitintooltwo'), get_string('restorationheader', 'turnitintooltwo'), false);
@@ -273,7 +292,8 @@ class turnitintooltwo_view {
         $eulaaccepted = false;
         if ($userid == $USER->id) {
             $user = new turnitintooltwo_user($userid, "Learner");
-            $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
+            $coursetype = turnitintooltwo_get_course_type($turnitintooltwoassignment->turnitintooltwo->legacy);
+            $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course, $coursetype);
             $user->join_user_to_class($coursedata->turnitin_cid);
             $eulaaccepted = ($user->useragreementaccepted != 1) ? $user->get_accepted_user_agreement() : $user->useragreementaccepted;
         }
@@ -720,7 +740,8 @@ class turnitintooltwo_view {
         $textfield = $partdetails[$partid]->partname;
         if ($istutor) {
             $textfield = html_writer::link('#', $partdetails[$partid]->partname,
-                                            array('class' => 'editable_text editable_text_'.$partid,
+                                            array('title' => get_string('edit', 'turnitintooltwo'),
+                                                'class' => 'editable_text editable_text_'.$partid,
                                                 'data-type' => 'text', 'data-pk' => $partid, 'data-name' => 'partname',
                                                 'id' => 'part_name_'.$partid,
                                                 'data-params' => "{ 'assignment': ".
@@ -734,7 +755,8 @@ class turnitintooltwo_view {
         $datefield = userdate($partdetails[$partid]->dtstart, $dateformat);
         if ($istutor) {
             $datefield = html_writer::link('#', $datefield,
-                                            array('class' => 'editable_date editable_date_'.$partid,
+                                            array('title' => get_string('edit', 'turnitintooltwo'),
+                                                'class' => 'editable_date editable_date_'.$partid,
                                                 'data-pk' => $partid, 'data-name' => 'dtstart', 'id' => 'date_start_'.$partid,
                                                 'data-params' => "{ 'assignment': ".
                                                                     $turnitintooltwoassignment->turnitintooltwo->id.", ".
@@ -749,6 +771,7 @@ class turnitintooltwo_view {
         if ($istutor) {
             $datefield = html_writer::link('#', $datefield,
                                             array('data-anon' => $turnitintooltwoassignment->turnitintooltwo->anon,
+                                                'title' => get_string('edit', 'turnitintooltwo'),
                                                 'class' => 'editable_postdue editable_date editable_date_'.$partid,
                                                 'data-pk' => $partid, 'data-name' => 'dtdue', 'id' => 'date_due_'.$partid,
                                                 'data-params' => "{ 'assignment': ".
@@ -766,6 +789,7 @@ class turnitintooltwo_view {
                                             array('data-anon' => $turnitintooltwoassignment->turnitintooltwo->anon,
                                                 'data-unanon' => $partdetails[$partid]->unanon,
                                                 'data-submitted' => $partdetails[$partid]->submitted,
+                                                'title' => get_string('edit', 'turnitintooltwo'),
                                                 'class' => 'editable_postdue editable_date editable_date_'.$partid,
                                                 'data-pk' => $partid, 'data-name' => 'dtpost', 'id' => 'date_post_'.$partid,
                                                 'data-params' => "{ 'assignment': ".
@@ -794,7 +818,8 @@ class turnitintooltwo_view {
             $textfield = $partdetails[$partid]->maxmarks.$rubricviewlink;
             if ($istutor) {
                 $textfield = html_writer::link('#', $partdetails[$partid]->maxmarks,
-                                                array('class' => 'editable_text editable_text_'.$partid, 'id' => 'marks_'.$partid,
+                                                array('title' => get_string('edit', 'turnitintooltwo'),
+                                                    'class' => 'editable_text editable_text_'.$partid, 'id' => 'marks_'.$partid,
                                                     'data-type' => 'text', 'data-pk' => $partid, 'data-name' => 'maxmarks',
                                                     'data-params' => "{ 'assignment': ".
                                                                         $turnitintooltwoassignment->turnitintooltwo->id.", ".
@@ -808,7 +833,8 @@ class turnitintooltwo_view {
             // Output icon to download zip file of submissions in original format.
             $exportoriginalzip = $OUTPUT->box_start('row_export_orig', '');
             $exportoriginalzip .= $OUTPUT->box(
-                html_writer::tag('i', '', array('class' => 'fa fa-file-o fa-lg')),
+                html_writer::tag('i', '', array('title' => get_string('exportoriginal', 'turnitintooltwo'),
+                                                'class' => 'fa fa-file-o fa-lg')),
                 'zip_open orig_zip_open', 'orig_zip_'.$partdetails[$partid]->tiiassignid
             );
             // Put in div placeholder for launch form.
@@ -818,16 +844,19 @@ class turnitintooltwo_view {
             // Output icon to download zip file of submissions in pdf format.
             $exportpdfzip = html_writer::link($CFG->wwwroot.'/mod/turnitintooltwo/view.php?id='.
                                     $cm->id.'&part='.$partid.'&do=export_pdfs&view_context=box_solid',
-                                    html_writer::tag('i', '', array('class' => 'fa fa-file-pdf-o fa-lg middle-padding')),
+                                    html_writer::tag('i', '', array('title' => get_string('exportpdf', 'turnitintooltwo'),
+                                        'class' => 'fa fa-file-pdf-o fa-lg middle-padding')),
                                     array("class" => "downloadpdf_box",
                                             "id" => "download_".$partdetails[$partid]->tiiassignid));
 
             // Output icon to download excel spreadsheet of grades.
             $exportxlszip = $OUTPUT->box_start('row_export_xls', '');
             $exportxlszip .= $OUTPUT->box(
-                    html_writer::tag('i', '', array('class' => 'fa fa-file-excel-o fa-lg')),
+                    html_writer::tag('i', '', array('title' => get_string('exportexcel', 'turnitintooltwo'),
+                        'class' => 'fa fa-file-excel-o fa-lg')),
                     'zip_open xls_inbox_open', 'xls_inbox_'.$partdetails[$partid]->tiiassignid
                 );
+
             // Put in div placeholder for launch form.
             $exportxlszip .= $OUTPUT->box('', 'launch_form', 'xls_inbox_form_'.$partdetails[$partid]->tiiassignid);
             $exportxlszip .= $OUTPUT->box_end(true);
@@ -853,7 +882,8 @@ class turnitintooltwo_view {
             // Show feature links (rubric and quickmark).
             if ($config->usegrademark) {
                 // Rubric Manager.
-                $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
+                $coursetype = turnitintooltwo_get_course_type($turnitintooltwoassignment->turnitintooltwo->legacy);
+                $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course, $coursetype);
                 $rubricmanagerlink = $OUTPUT->box_start('row_rubric_manager', '');
                 $rubricmanagerlink .= html_writer::link($CFG->wwwroot.
                                         '/mod/turnitintooltwo/extras.php?cmd=rubricmanager&tiicourseid='.
@@ -1258,7 +1288,8 @@ class turnitintooltwo_view {
                 $grade = '';
                 if (!is_null($submission->submission_grade) || $submission->submission_gmimaged != 0 || $istutor) {
                     $grade = $OUTPUT->box(
-                        html_writer::tag('i', '', array('class' => 'fa fa-pencil fa-lg gm-blue')), 'grademark_open ' . $class,
+                        html_writer::tag('i', '', array('title' => get_string('submissiongrade', 'turnitintooltwo'),
+                            'class' => 'fa fa-pencil fa-lg gm-blue')), 'grademark_open ' . $class,
                         'grademark_' . $submission->submission_objectid . '_' . $partid . '_' . $moodleuserid,
                         array('title' => $CFG->wwwroot . '/mod/turnitintooltwo/view.php?id=' . $cm->id)
                     );
@@ -1359,10 +1390,15 @@ class turnitintooltwo_view {
             $eulaaccepted = 0;
             if ($submission->userid == $USER->id) {
                 $submissionuser = new turnitintooltwo_user($submission->userid, "Learner");
-                $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course);
-                if (!$_SESSION["unit_test"]) {
+
+                $legacyassignment = (empty($turnitintooltwoassignment->turnitintooltwo->legacy)) ? 0 : 1;
+                $coursetype = turnitintooltwo_get_course_type($legacyassignment);
+                $coursedata = $turnitintooltwoassignment->get_course_data($turnitintooltwoassignment->turnitintooltwo->course, $coursetype);
+
+                if (empty($_SESSION["unit_test"])) {
                     $submissionuser->join_user_to_class($coursedata->turnitin_cid);
                 }
+
                 // Has the student accepted the EULA?
                 $eulaaccepted = $submissionuser->useragreementaccepted;
                 if ($submissionuser->useragreementaccepted == 0 && !$_SESSION["unit_test"]) {
@@ -1388,7 +1424,8 @@ class turnitintooltwo_view {
         // Download submission in original format.
         if (!empty($submission->submission_objectid) && !empty($submission->id) && !$submission->submission_acceptnothing) {
             $download = $OUTPUT->box(
-                html_writer::tag('i', '', array('class' => 'fa fa-cloud-download fa-lg')),
+                html_writer::tag('i', '', array('title' => get_string('downloadsubmission', 'turnitintooltwo'),
+                    'class' => 'fa fa-download fa-lg')),
                 'download_original_open',
                 'downloadoriginal_' . $submission->submission_objectid . "_" . $partid . "_" . $moodleuserid
             );
@@ -1429,8 +1466,8 @@ class turnitintooltwo_view {
             }
         }
         if ($uselink) {
-            $delete = html_writer::tag('div', html_writer::tag('i', '', array('class' => 'fa fa-trash-o fa-lg',
-                                                'title' => get_string('deletesubmission', 'turnitintooltwo'))),
+            $delete = html_writer::tag('div', html_writer::tag('i', '', array('title' => get_string('deletesubmission', 'turnitintooltwo'),
+                                                'class' => 'fa fa-trash-o fa-lg')),
                                                 array('class' => 'delete_paper',
                                                     'id' => 'delete_paperrow',
                                                     "data-confirm" => $confirmstring,
@@ -1891,7 +1928,8 @@ class turnitintooltwo_view {
                                                 'action' => $removeaction, 'membership_id' => $v['membership_id']));
 
                 $attributes["onclick"] = 'return confirm(\''.$removestr.'\');';
-                $link = html_writer::link($deleteurl, html_writer::tag('i', '', array('class' => 'fa fa-trash-o fa-lg')),
+                $link = html_writer::link($deleteurl, html_writer::tag('i', '', array('title' => get_string('deletesubmission', 'turnitintooltwo'),
+                                                                                    'class' => 'fa fa-trash-o fa-lg')),
                                                                                                         $attributes);
                 $userdetails = html_writer::link($CFG->wwwroot.'/user/view.php?id='.$membermoodleid.
                                                     '&course='.$turnitintooltwoassignment->turnitintooltwo->course,
@@ -1949,6 +1987,45 @@ class turnitintooltwo_view {
         $form = new turnitintooltwo_form($CFG->wwwroot.'/mod/turnitintooltwo/view.php'.'?id='.$cm->id.'&do=tutors', $customdata);
 
         $output = $OUTPUT->box($form->display(), 'generalbox boxaligncenter', 'general');
+        return $output;
+    }
+
+    /**
+     * build_migration_activation_page
+     * Builds the visual page for activate_migration
+     * @return string $output
+     */
+    public static function build_migration_activation_page() {
+        global $DB, $CFG, $OUTPUT;
+        $already_active = $DB->get_record('config_plugins', array(
+            'plugin' => 'turnitintooltwo',
+            'name' => 'migration_enabled'
+        ));
+
+        if ($already_active && $already_active->value == 1) {
+            $urlparams = array('cmd' => 'v1migration');
+            redirect(new moodle_url('/mod/turnitintooltwo/settings_extras.php', $urlparams));
+        }
+        
+        $notice = html_writer::tag(
+            'div',
+            get_string('activatemigrationnotice', 'turnitintooltwo'),
+            array('class'=>'alert alert-info')
+        );
+
+        $button = html_writer::link(
+            new moodle_url('/mod/turnitintooltwo/activate_migration.php', array('do_migration' => 1)),
+            get_string('activatemigration', 'turnitintooltwo'),
+            array('class' => 'btn btn-default', 'role' => 'button')
+        );
+
+        $output = $OUTPUT->header();
+        $output .= html_writer::start_tag('div', array('class' => 'mod_turnitintooltwo'));
+        $output .= $OUTPUT->heading(get_string('pluginname', 'turnitintooltwo'), 2, 'main');
+        $output .= $notice;
+        $output .= $button;
+        $output .= html_writer::end_tag("div");
+
         return $output;
     }
 }

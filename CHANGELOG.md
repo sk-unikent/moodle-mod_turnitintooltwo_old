@@ -1,3 +1,48 @@
+### Date:		2017-August-09
+### Release:	v2017080901
+
+**Use new assignment dates during course reset** - We received a report that during a course reset, anonymous marking settings were not carried over if an assignment's due date had already passed.
+
+Now, you can opt to use new assignment dates when initiating a course reset by selecting the **Use new assignment dates** check box. The assignment start date will be set to the date and time of the course reset, while the due and post date will elapse seven days from then.
+
+If you’d rather not use new assignment dates, that’s fine; Turnitin will use the course’s original assignment dates instead. However, any anonymous marking settings will not be carried over for assignments where the post date has passed.
+
+![Reset course feature](https://github.com/turnitin/moodle-mod_turnitintooltwo/blob/master/pix/changelog/resetcourse.png "Reset course feature")
+
+---
+
+### Date:		2017-July-19
+### Release:	v2017071901
+
+This release is for beta testers of the V1 to V2 Migration Tool. Please note that you will also need to update to Moodle Direct V1 (v2017071901) in order for the Migration Tool to work.
+
+---
+
+### Date:		2017-July-03
+### Release:	v2017070301
+
+We now support Moodle 3.3!
+
+- Changed assignment names to be plugin specific
+- Added tool tips to interface icons  (Thanks to @rlorenzo)
+- All settings are preserved when duplicating or restoring an assignment
+- Students no longer see PHP warnings
+- Fixed a code issue for assignment backup and restore (Thanks to @davidscotson)
+
+**Changed assignment names to be plugin specific** - When creating a course that included both V1 and V2 assignments, it was difficult to differentiate between the two plugins during setup, with them both being titled 'Turnitin Assignment'. To resolve this, we've changed the assignment titles to be plugin specific.
+
+**Added tool tips to interface icons**  - We received a request to add a tooltip to the following Turnitin interface icons: trash can, pencil, grade, and download. We also swapped the cloud icon (used for downloading a submission) to an easier-to-identify arrow icon.
+
+**Note:** A tool tip is a message that appears when the cursor is positioned over an icon, image, or any other graphic. The inclusion of icon tooltips increases accessibility for users (particularly those using screen readers!)
+
+**All settings are preserved when duplicating or restoring an assignment** - We've fixed an issue that resulted in the 'Allow submission of any file type' and 'Check against Institutional Repository' settings to be forgotten about when duplicating or restoring from backup. Now, a restored or duplicated assignment will have identical settings to its source assignment. Phew!
+
+**Students no longer see PHP warnings** - We received reports that students were able to see PHP errors if Moodle debugging was set to full developer level by the administrator. We've fixed this to ensure that the PHP error is no longer visible to students.
+
+**Fixed a code issue for assignment backup and restore** - We noticed that in the assignment backup and restore code, the same URL substitution was used for V2 as in V1, which could potentially cause backup and restoration issues. We've corrected this so that 'TURNITINTOOLTWO' is now used to encode links to the module and module list, rather than its V1 counterpart, 'TURNITINTOOL'. 
+
+---
+
 ### Date:		2017-May-24
 ### Release:	v2017052401
 
