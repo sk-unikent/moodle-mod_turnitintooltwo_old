@@ -321,7 +321,7 @@ if (!empty($action)) {
                             'submissionpart' => $post['submissionpart'],
                             'subtime' => time()
                         ));
-                        \core\task\manager::queue_adhoc_task($task, null, 1024);
+                        \core\task\manager::queue_adhoc_task($task, true, null, 1024);
 
                         turnitintooltwo_add_to_log(
                             $turnitintooltwoassignment->turnitintooltwo->course,
