@@ -68,10 +68,12 @@ class submit_assignment extends \core\task\adhoc_task
             $tiisubmission = $turnitintooltwosubmission->do_tii_submission($cm, $turnitintooltwoassignment);
 
             // Update submission.
-            $DB->update_record('turnitintooltwo_submissions', array(
-                'id' => $data['submissionid'],
-                'submission_modified' => $data['subtime']
-            ));
+            if ($tiisubmission['success'] == true) {
+                $DB->update_record('turnitintooltwo_submissions', array(
+                        'id' => $data['submissionid'],
+                        'submission_modified' => $data['subtime']
+                ));
+            }
         } catch (\Exception $e) {
             $tiisubmission = array(
                 'success' => false,
@@ -110,7 +112,7 @@ class submit_assignment extends \core\task\adhoc_task
                 $course->id,
                 "errored submission",
                 'view.php?id='.$cm->id,
-                "Failed to submit '" . $turnitintooltwosubmission->submission_title . "'",
+                "Failed to submit '" . $turnitintooltwosubmission->submission_title . "' " . ($tiisubmission['message'] ?: ''),
                 $cm->id,
                 $user->id,
                 array('submissionid' => $data['submissionid'])
