@@ -187,5 +187,17 @@
                 <INDEX NAME="tiiassignid" UNIQUE="false" FIELDS="tiiassignid" PREVIOUS="parent_tii_assign_id"/>
             </INDEXES>
         </TABLE>
+        <TABLE NAME="turnitintooltwo_sub_status" COMMENT="Submission status">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+                <FIELD NAME="submissionid" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="false"/>
+                <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false"/>
+                <FIELD NAME="receipt" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+                <KEY NAME="k_submissionid" TYPE="unique" FIELDS="submissionid"/>
+            </KEYS>
+        </TABLE>
     </TABLES>
 </XMLDB>
