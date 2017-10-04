@@ -588,7 +588,8 @@ class turnitintooltwo_assignment {
         $course = $this->get_course_data($this->turnitintooltwo->course, $coursetype);
 
         // Get local course members.
-        $students = get_enrolled_users(context_module::instance($cm->id),
+        $context = context_module::instance($cm->id);
+        $students = get_enrolled_users($context,
                                 'mod/turnitintooltwo:submit', groups_get_activity_group($cm), 'u.id');
 
         // Get the user ids of who is already enrolled and remove them from the students array.
